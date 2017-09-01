@@ -2,8 +2,15 @@
 
 **WIP. Not stable. API may change at any time.**
 
-Package oas2 provides utilities to work with OpenAPI v2 specification
+Package oas2 provides utilities to work with OpenAPI 2.0 specification
 (aka Swagger).
+
+The purpose of this package is to provide utilities for building APIs
+from the OpenAPI specification in Go idiomatic way on top of `net/http`.
+
+You don't need to learn any special framework or write `net/http`-incompatible
+code - just delegate request validation, request parameters decoding
+and other routines to this library - and focus on your application logic.
 
 ## Features
 
