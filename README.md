@@ -48,7 +48,7 @@ And populate it:
 
 ```go
 var m Member 
-oas.DecodeQuery(paramSpec, req.URL.Query(), &m)
+oas2.DecodeQuery(paramSpec, req.URL.Query(), &m)
 
 fmt.Printf("%#v", m) // Member{Name:"John", Age:27, LovesApples:true}
 ```
