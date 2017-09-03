@@ -1,8 +1,8 @@
 package oas2
 
 import (
-	"io/ioutil"
 	"net/http"
+	"io/ioutil"
 
 	"github.com/go-openapi/analysis"
 	"github.com/go-openapi/spec"
@@ -61,7 +61,7 @@ type Options struct {
 	baseRouterFactory func() BaseRouter
 }
 
-// Options is an option for oas2 router.
+// Option is an option for oas2 router.
 type Option func(*Options)
 
 // Logger returns an option that sets a logger for oas2 router.
