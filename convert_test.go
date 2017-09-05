@@ -1,4 +1,4 @@
-package convert
+package oas2
 
 import (
 	"reflect"
@@ -40,7 +40,7 @@ func TestParameter(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		v, err := Parameter(c.values, c.typ, c.format)
+		v, err := ConvertParameter(c.values, c.typ, c.format)
 
 		if err != nil && !c.expectError {
 			t.Errorf("Unexpected error: %v", err)
@@ -177,7 +177,7 @@ func TestPrimitive(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		v, err := Primitive(c.value, c.typ, c.format)
+		v, err := ConvertPrimitive(c.value, c.typ, c.format)
 		if err != nil && !c.expectError {
 			t.Errorf("Unexpected error: %v", err)
 		}

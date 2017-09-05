@@ -6,8 +6,6 @@ import (
 	"reflect"
 
 	"github.com/go-openapi/spec"
-
-	"github.com/hypnoglow/oas2/convert"
 )
 
 const (
@@ -48,7 +46,7 @@ func DecodeQuery(ps []spec.Parameter, q url.Values, dst interface{}) error {
 		}
 
 		// Convert value by type+format in parameter.
-		v, err := convert.Parameter(vals, p.Type, p.Format)
+		v, err := ConvertParameter(vals, p.Type, p.Format)
 		if err != nil {
 			return fmt.Errorf(
 				"cannot convert values %v of parameter %s with type %s and format %s: %s",
