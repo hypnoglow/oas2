@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestParameter(t *testing.T) {
+func TestConvertParameter(t *testing.T) {
 	cases := []struct {
 		values        []string
 		typ           string
@@ -61,7 +61,7 @@ func TestParameter(t *testing.T) {
 	}
 }
 
-func TestPrimitive(t *testing.T) {
+func TestConvertPrimitive(t *testing.T) {
 	cases := []struct {
 		value         string
 		typ           string

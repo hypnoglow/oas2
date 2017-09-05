@@ -21,7 +21,7 @@ func DecodeQuery(ps []spec.Parameter, q url.Values, dst interface{}) error {
 
 	dv = dv.Elem()
 	if dv.Kind() != reflect.Struct {
-		return fmt.Errorf("dst is not a struct")
+		return fmt.Errorf("dst is not a pointer to struct (cannot modify)")
 	}
 
 	fields := fieldMap(dv)
@@ -49,12 +49,11 @@ func DecodeQuery(ps []spec.Parameter, q url.Values, dst interface{}) error {
 		v, err := ConvertParameter(vals, p.Type, p.Format)
 		if err != nil {
 			return fmt.Errorf(
-				"cannot convert values %v of parameter %s with type %s and format %s: %s",
+				"cannot use values %v as parameter %s with type %s and format %s",
 				vals,
 				p.Name,
 				p.Type,
 				p.Format,
-				err,
 			)
 		}
 
@@ -69,12 +68,12 @@ func DecodeQuery(ps []spec.Parameter, q url.Values, dst interface{}) error {
 func set(v interface{}, f reflect.StructField, dst reflect.Value) error {
 	// Check if tag in struct can accept value of type v.
 	if !f.Type.AssignableTo(reflect.TypeOf(v)) {
-		return fmt.Errorf("tag %s is not assignable to %s", f.Name, reflect.TypeOf(v).Name())
+		return fmt.Errorf("field %s is not assignable to %s", f.Name, reflect.TypeOf(v).Name())
 	}
 
 	fieldVal := dst.FieldByName(f.Name)
 	if !fieldVal.CanSet() {
-		return fmt.Errorf("tag value %s is not settable", f.Name)
+		return fmt.Errorf("field value %s is not settable", f.Name)
 	}
 
 	fieldVal.Set(reflect.ValueOf(v))
