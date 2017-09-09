@@ -6,6 +6,13 @@ Run the server:
     
 Send requests:
 
-    curl -XPOST localhost:3000/v2/pet
+    curl -XPOST -i localhost:3000/v2/pet
     
-    curl -XGET  localhost:3000/store/inventory
+    curl -XGET  -i localhost:3000/v2/store/inventory
+    
+Now try a request that does not meet spec parameters requirements:
+    
+    curl -XGET -i "localhost:3000/v2/user/login?username=johndoe"
+    
+    # HTTP/1.1 400 Bad Request
+    # {"errors":[{"message":"param password is required","field":"password"}]}

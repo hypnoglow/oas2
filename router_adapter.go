@@ -22,16 +22,6 @@ func ChiAdapter(router chi.Router) BaseRouter {
 	}
 }
 
-// ChiAdapterFactory returns a BaseRouterFactory that produces BaseRouter made from chi.BaseRouter.
-// More about router: github.com/go-chi/chi
-func ChiAdapterFactory(router chi.Router) func() BaseRouter {
-	return func() BaseRouter {
-		return ChiAdapter(router)
-	}
-}
-
-func defaultBaseRouterFactory() func() BaseRouter {
-	return func() BaseRouter {
-		return ChiAdapter(chi.NewRouter())
-	}
+func defaultBaseRouter() BaseRouter {
+	return ChiAdapter(chi.NewRouter())
 }

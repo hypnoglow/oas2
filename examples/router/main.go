@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -28,26 +29,82 @@ func main() {
 
 	handlers := oas2.OperationHandlers{
 		"addPet":       http.HandlerFunc(postPet),
+		"loginUser":    http.HandlerFunc(getUserLogin),
 		"getInventory": http.HandlerFunc(getStoreInventory),
 	}
 
 	lg := logrus.New()
 	lg.SetLevel(logrus.DebugLevel)
 
-	router, err := oas2.NewRouter(doc.Spec(), handlers, oas2.Logger(lg))
+	opts := []oas2.Option{
+		oas2.LoggerOpt(lg),
+		oas2.MiddlewareOpt(oas2.NewQueryValidator(doc.Spec(), errHandler).Apply),
+	}
+
+	router, err := oas2.NewRouter(doc.Spec(), handlers, opts...)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	http.ListenAndServe(":3000", router)
+	log.Println(http.ListenAndServe(":3000", router))
 }
 
 func postPet(w http.ResponseWriter, req *http.Request) {
-	io.WriteString(w, "postPet")
+	if _, err := io.WriteString(w, "postPet"); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func getUserLogin(w http.ResponseWriter, req *http.Request) {
+	if _, err := io.WriteString(w, "getUserLogin"); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func getStoreInventory(w http.ResponseWriter, req *http.Request) {
-	io.WriteString(w, "getStoreInventory")
+	if _, err := io.WriteString(w, "getStoreInventory"); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func errHandler(w http.ResponseWriter, errs []error) {
+	// This is an example of composing an error for the response
+	// from validation errors.
+
+	type (
+		errorItem struct {
+			Message string      `json:"message"`
+			Field   string      `json:"field"`
+			Value   interface{} `json:"value"`
+		}
+		payload struct {
+			Errors []errorItem `json:"errors"`
+		}
+	)
+
+	type fielder interface {
+		Field() string
+	}
+
+	type valuer interface {
+		Value() interface{}
+	}
+
+	p := payload{Errors: make([]errorItem, 0)}
+	for _, e := range errs {
+		item := errorItem{Message: e.Error()}
+		if fe, ok := e.(fielder); ok {
+			item.Field = fe.Field()
+		}
+		if ve, ok := e.(valuer); ok {
+			item.Value = ve.Value()
+		}
+		p.Errors = append(p.Errors, item)
+	}
+
+	if err := json.NewEncoder(w).Encode(p); err != nil {
+		log.Fatalln(err)
+	}
 }
 
 // loadSpecDoc loads a OpenAPI 2.0 Specification document.
