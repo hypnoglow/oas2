@@ -15,6 +15,7 @@ func TestDecodeQuery(t *testing.T) {
 			Name           string `oas:"name"`
 			Sex            string `oas:"sex"`
 			fieldWithNoTag string
+			notSettable    string `oas:"not_settable"`
 		}
 
 		member struct {
@@ -243,6 +244,28 @@ func TestDecodeQuery(t *testing.T) {
 				"age",
 				"integer",
 				"int32",
+			),
+		},
+		// not settable field
+		{
+			ps: []spec.Parameter{
+				{
+					ParamProps: spec.ParamProps{
+						Name: "not_settable",
+						In:   "query",
+					},
+					SimpleSchema: spec.SimpleSchema{
+						Type: "string",
+					},
+				},
+			},
+			q: url.Values{
+				"not_settable": []string{"Twenty Two"},
+			},
+			dst:          &user{},
+			expectedData: &user{},
+			expectedError: fmt.Errorf(
+				"field notSettable of type user is not settable",
 			),
 		},
 	}

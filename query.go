@@ -73,7 +73,7 @@ func set(v interface{}, f reflect.StructField, dst reflect.Value) error {
 
 	fieldVal := dst.FieldByName(f.Name)
 	if !fieldVal.CanSet() {
-		return fmt.Errorf("field value %s is not settable", f.Name)
+		return fmt.Errorf("field %s of type %s is not settable", f.Name, dst.Type().Name())
 	}
 
 	fieldVal.Set(reflect.ValueOf(v))

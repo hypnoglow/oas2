@@ -1,10 +1,10 @@
 package oas2
 
 import (
-	"testing"
-
 	"io"
+	"log"
 	"net/http"
+	"testing"
 
 	"github.com/go-chi/chi"
 )
@@ -13,7 +13,9 @@ func TestChiRouter_Route(t *testing.T) {
 	r := ChiAdapter(chi.NewRouter())
 
 	hf := func(w http.ResponseWriter, req *http.Request) {
-		io.WriteString(w, "handler func")
+		if _, err := io.WriteString(w, "handler func"); err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	r.Route("GET", "/path", http.HandlerFunc(hf))
@@ -21,9 +23,4 @@ func TestChiRouter_Route(t *testing.T) {
 
 func TestChiAdapter(t *testing.T) {
 	ChiAdapter(chi.NewRouter())
-}
-
-func TestChiAdapterFactory(t *testing.T) {
-	f := ChiAdapterFactory(chi.NewRouter())
-	f()
 }

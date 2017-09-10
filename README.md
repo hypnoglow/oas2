@@ -20,7 +20,82 @@ and other routines to this library - and focus on your application logic.
 
 ## Features
 
-#### Decode query parameters to a struct
+### Router from a spec
+
+Given a spec: [petstore.yaml](examples/petstore.yaml)
+
+First of all, load your spec in your app:
+
+```go
+import (
+    "github.com/go-openapi/loads"
+    "github.com/go-openapi/spec"
+)
+```
+
+```go
+// path is a path to your spec file.
+doc, _ := loads.Spec(path)
+spec.ExpandSpec(doc.Spec(), &spec.ExpandOptions{RelativeBase: path})
+```
+
+Next, create an [operation](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#operationObject) handler. 
+Let's define a handler for `loginUser` operation:
+
+```go
+func loginHandler(w http.ResponseWriter, req *http.Request) {
+    username := req.URL.Query().Get("username")
+    password := req.URL.Query().Get("password")
+    
+    if login(username, password) {
+        w.WriteHeader(http.StatusOK)
+        return
+    }
+    
+    w.WriteHeader(http.StatusBadRequest)
+}
+```
+
+```go
+handlers := oas2.OperationHandlers{
+    "loginUser":    http.HandlerFunc(loginHandler),
+}
+```
+
+Define what options (logger, middleware) you will use:
+
+```go
+logger := logrus.New()
+queryValidator := oas2.NewQueryValidator(doc.Spec(), errHandler)
+```
+
+Create a router:
+
+```go
+router, _ := oas2.NewRouter(
+    doc.Spec(), 
+    handlers, 
+    oas2.LoggerOpt(logger), 
+    oas2.MiddlewareOpt(queryValidator.Apply)
+)
+```
+
+Then you can use your `router` as an argument for `http.ListenAndServe` 
+or even as a subrouter for the other router.
+
+```go
+http.ListenAndServe(":8080", router)
+``` 
+
+Now the server handles requests based on the paths defined in the given spec.
+It validates request query parameters against the spec and runs `errHandler` 
+func if any error occured during validation. The router also sets the operation
+identifier to each request's context, so it can be used in a handler or any custom
+middleware.
+
+See the full [example](examples/router/main.go) for the complete code.
+
+### Decode query parameters to a struct
 
 Given request query parameters: `?name=John&age=27`
 

@@ -82,7 +82,7 @@ func convertInteger(val, format string) (interface{}, error) {
 	case "int32":
 		i, err := strconv.ParseInt(val, 10, 32)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("cannot convert %v to int32", val)
 		}
 		return int32(i), nil
 	case "int64":
@@ -90,7 +90,7 @@ func convertInteger(val, format string) (interface{}, error) {
 	case "":
 		i, err := strconv.ParseInt(val, 10, 64)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("cannot convert %v to int64", val)
 		}
 		return i, nil
 	default:
@@ -106,7 +106,7 @@ func convertNumber(val, format string) (interface{}, error) {
 	case "float":
 		f, err := strconv.ParseFloat(val, 32)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("cannot convert %v to float", val)
 		}
 		return float32(f), nil
 	case "double":
@@ -114,7 +114,7 @@ func convertNumber(val, format string) (interface{}, error) {
 	case "":
 		f, err := strconv.ParseFloat(val, 64)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("cannot convert %v to double", val)
 		}
 		return f, nil
 	default:
