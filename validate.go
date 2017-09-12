@@ -3,7 +3,9 @@ package oas2
 import (
 	"fmt"
 	"net/url"
+	"strings"
 
+	"github.com/go-openapi/errors"
 	"github.com/go-openapi/spec"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/validate"
@@ -34,28 +36,20 @@ func ValidateQuery(ps []spec.Parameter, q url.Values) []error {
 	return errs.Errors()
 }
 
-func validateQueryParam(p spec.Parameter, q url.Values) (errs ValidationErrors) {
-	_, ok := q[p.Name]
-	if !ok {
-		if p.Required {
-			errs = append(errs, ValidationErrorf(p.Name, nil, "param %s is required", p.Name))
+// ValidateBody validates request body by spec and returns errors if any.
+func ValidateBody(ps []spec.Parameter, data interface{}) []error {
+	errs := make(ValidationErrors, 0)
+
+	for _, p := range ps {
+		if p.In != "body" {
+			// Validating only "body" parameters.
+			continue
 		}
-		return errs
+
+		errs = append(errs, validateBodyParam(p, data)...)
 	}
 
-	value, err := ConvertParameter(q[p.Name], p.Type, p.Format)
-	if err != nil {
-		// TODO: q.Get(p.Name) relies on type that is not array/file.
-		return append(errs, ValidationErrorf(p.Name, q.Get(p.Name), "param %s: %s", p.Name, err))
-	}
-
-	if result := validate.NewParamValidator(&p, strfmt.Default).Validate(value); result != nil {
-		for _, e := range result.Errors {
-			errs = append(errs, ValidationErrorf(p.Name, value, e.Error()))
-		}
-	}
-
-	return errs
+	return errs.Errors()
 }
 
 // ValidationError describes validation error.
@@ -92,6 +86,48 @@ func (es ValidationErrors) Errors() []error {
 	for i, e := range es {
 		errs[i] = e
 	}
+	return errs
+}
+
+func validateQueryParam(p spec.Parameter, q url.Values) (errs ValidationErrors) {
+	_, ok := q[p.Name]
+	if !ok {
+		if p.Required {
+			errs = append(errs, ValidationErrorf(p.Name, nil, "param %s is required", p.Name))
+		}
+		return errs
+	}
+
+	value, err := ConvertParameter(q[p.Name], p.Type, p.Format)
+	if err != nil {
+		// TODO: q.Get(p.Name) relies on type that is not array/file.
+		return append(errs, ValidationErrorf(p.Name, q.Get(p.Name), "param %s: %s", p.Name, err))
+	}
+
+	if result := validate.NewParamValidator(&p, strfmt.Default).Validate(value); result != nil {
+		for _, e := range result.Errors {
+			errs = append(errs, ValidationErrorf(p.Name, value, e.Error()))
+		}
+	}
+
+	return errs
+}
+
+func validateBodyParam(p spec.Parameter, data interface{}) (errs ValidationErrors) {
+	for _, e := range validatebySchema(p.Schema, data) {
+		ve := e.(*errors.Validation)
+		errs = append(errs, ValidationErrorf(strings.TrimPrefix(ve.Name, "."), nil, strings.TrimPrefix(ve.Error(), ".")))
+	}
+	return errs
+}
+
+func validatebySchema(sch *spec.Schema, data interface{}) (errs []error) {
+	err := validate.AgainstSchema(sch, data, strfmt.Default)
+	ves, ok := err.(*errors.CompositeError)
+	if ok && len(ves.Errors) > 0 {
+		errs = append(errs, ves.Errors...)
+	}
+
 	return errs
 }
 

@@ -4,7 +4,10 @@ import (
 	"log"
 
 	"github.com/go-openapi/loads"
+	"github.com/go-openapi/spec"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
 func loadDoc() *loads.Document {
@@ -19,6 +22,14 @@ func loadDoc() *loads.Document {
 
 	doc, err := loads.Analyzed(jsn, "2.0")
 	if err != nil {
+		log.Fatalln(err)
+	}
+
+	if err := spec.ExpandSpec(doc.Spec(), &spec.ExpandOptions{}); err != nil {
+		log.Fatalln(err)
+	}
+
+	if err := validate.Spec(doc, strfmt.Default); err != nil {
 		log.Fatalln(err)
 	}
 
@@ -53,13 +64,10 @@ paths:
       tags:
       - "pet"
       summary: "Add a new pet to the store"
-      description: ""
       operationId: "addPet"
       consumes:
       - "application/json"
-      - "application/xml"
       produces:
-      - "application/xml"
       - "application/json"
       parameters:
       - in: "body"
@@ -68,6 +76,9 @@ paths:
         required: true
         schema:
           $ref: "#/definitions/Pet"
+      - in: query
+        name: debug
+        type: boolean
       responses:
         405:
           description: "Invalid input"
@@ -83,7 +94,6 @@ paths:
       description: ""
       operationId: "loginUser"
       produces:
-      - "application/xml"
       - "application/json"
       parameters:
       - name: "username"
@@ -129,30 +139,22 @@ definitions:
     type: "object"
     required:
     - "name"
-    - "photoUrls"
+    - "age"
     properties:
       id:
         type: "integer"
         format: "int64"
-      category:
-        $ref: "#/definitions/Category"
       name:
         type: "string"
         example: "doggie"
-      photoUrls:
-        type: "array"
-        xml:
-          name: "photoUrl"
-          wrapped: true
-        items:
-          type: "string"
+      age:
+        type: "integer"
+        format: "int32"
+        example: 7
       tags:
         type: "array"
-        xml:
-          name: "tag"
-          wrapped: true
         items:
-          $ref: "#/definitions/Tag"
+          type: "array"
       status:
         type: "string"
         description: "pet status in the store"
@@ -160,8 +162,6 @@ definitions:
         - "available"
         - "pending"
         - "sold"
-    xml:
-      name: "Pet"
   ApiResponse:
     type: "object"
     properties:

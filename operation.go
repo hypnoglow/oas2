@@ -3,6 +3,8 @@ package oas2
 import (
 	"context"
 	"net/http"
+
+	"github.com/go-openapi/spec"
 )
 
 // OperationID is an operation identifier.
@@ -16,22 +18,22 @@ func (oid OperationID) String() string {
 // OperationHandlers maps OperationID to its handler.
 type OperationHandlers map[OperationID]http.Handler
 
-// GetOperationID returns OperationID from the request's context.
-func GetOperationID(req *http.Request) OperationID {
-	id, ok := req.Context().Value(contextKeyOperationID{}).(OperationID)
+// GetOperation returns *spec.Operation from the request's context.
+func GetOperation(req *http.Request) *spec.Operation {
+	op, ok := req.Context().Value(contextKeyOperation{}).(*spec.Operation)
 	if ok {
-		return id
+		return op
 	}
 
-	return OperationID("")
+	return nil
 }
 
-type contextKeyOperationID struct{}
+type contextKeyOperation struct{}
 
-func operationIDMiddleware(next http.Handler, id OperationID) http.Handler {
+func operationIDMiddleware(next http.Handler, op *spec.Operation) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		req = req.WithContext(
-			context.WithValue(req.Context(), contextKeyOperationID{}, id),
+			context.WithValue(req.Context(), contextKeyOperation{}, op),
 		)
 		next.ServeHTTP(w, req)
 	})

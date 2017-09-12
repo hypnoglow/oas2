@@ -44,7 +44,7 @@ func NewRouter(
 			}
 
 			opts.logger.Debugf("oas2 router: handle: %s %s", method, path)
-			handler = operationIDMiddleware(handler, OperationID(op.ID))
+			handler = operationIDMiddleware(handler, op)
 			subrouter.Route(method, path, handler)
 		}
 	}
