@@ -2,6 +2,7 @@ package oas2
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -59,17 +60,13 @@ func (m queryValidatorMiddleware) Apply(next http.Handler) http.Handler {
 
 // NewBodyValidator returns new Middleware that validates request body
 // against parameters defined in OpenAPI 2.0 spec.
-func NewBodyValidator(sp *spec.Swagger, errHandler func(w http.ResponseWriter, errs []error)) Middleware {
+func NewBodyValidator(errHandler func(w http.ResponseWriter, errs []error)) Middleware {
 	return bodyValidatorMiddleware{
-		sp:         sp,
-		an:         analysis.New(sp),
 		errHandler: errHandler,
 	}
 }
 
 type bodyValidatorMiddleware struct {
-	sp         *spec.Swagger
-	an         *analysis.Spec
 	errHandler func(w http.ResponseWriter, errs []error)
 }
 
@@ -111,3 +108,47 @@ func (m bodyValidatorMiddleware) Apply(next http.Handler) http.Handler {
 		next.ServeHTTP(w, req)
 	})
 }
+
+// NewPathParameterExtractor returns new Middleware that extracts parameters
+// defined in OpenAPI 2.0 spec as path parameters from path.
+func NewPathParameterExtractor(extractor func(r *http.Request, key string) string) Middleware {
+	return pathParameterExtractor{extractor}
+}
+
+type pathParameterExtractor struct {
+	extractor func(r *http.Request, key string) string
+}
+
+func (m pathParameterExtractor) Apply(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		op := GetOperation(req)
+		if op == nil {
+			next.ServeHTTP(w, req)
+			return
+		}
+
+		for _, p := range op.Parameters {
+			if p.In != "path" {
+				continue
+			}
+
+			value, err := ConvertPrimitive(m.extractor(req, p.Name), p.Type, p.Format)
+			if err == nil {
+				req = req.WithContext(
+					context.WithValue(req.Context(), contextKeyPathParam(p.Name), value),
+				)
+			}
+		}
+
+		next.ServeHTTP(w, req)
+	})
+}
+
+// GetPathParam returns a path parameter by name from a request.
+// For example, a handler defined on a path "/pet/{id}" gets a request with
+// path "/pet/12" - in this case GetPathParam(req, "id") returns 12.
+func GetPathParam(req *http.Request, name string) interface{} {
+	return req.Context().Value(contextKeyPathParam(name))
+}
+
+type contextKeyPathParam string

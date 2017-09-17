@@ -158,7 +158,7 @@ func TestBodyValidatorMiddleware_Apply(t *testing.T) {
 		fmt.Fprint(w, "hit no operation resource")
 	})
 
-	bodyValidator := NewBodyValidator(doc.Spec(), errHandler)
+	bodyValidator := NewBodyValidator(errHandler)
 	opts := []Option{MiddlewareOpt(bodyValidator.Apply)}
 
 	operationsRouter, err := NewRouter(doc.Spec(), handlers, opts...)
@@ -188,6 +188,81 @@ func TestBodyValidatorMiddleware_Apply(t *testing.T) {
 
 		if !bytes.Equal([]byte(c.expectedPayload), respBody) {
 			t.Fatalf("Expected response body to be\n%s\nbut got\n%s", c.expectedPayload, string(respBody))
+		}
+	}
+
+	// tear down
+
+	server.Close()
+}
+
+func TestPathParameterExtractor_Apply(t *testing.T) {
+	cases := []struct {
+		url                string
+		expectedStatusCode int
+		expectedPayload    string
+	}{
+		// ok
+		{
+			url:                "/pet/12",
+			expectedStatusCode: http.StatusOK,
+			expectedPayload:    "pet by id: 12",
+		},
+		// request an url which handler does not provide operation context
+		{
+			url:                "/no_operation_resource",
+			expectedStatusCode: http.StatusOK,
+			expectedPayload:    "hit no operation resource",
+		},
+	}
+
+	// set up
+
+	doc := loadDoc()
+
+	handlers := OperationHandlers{"getPetById": http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		id, ok := GetPathParam(req, "petId").(int64)
+		if !ok {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		fmt.Fprintf(w, "pet by id: %d", id)
+	})}
+	noOpHandler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		fmt.Fprint(w, "hit no operation resource")
+	})
+
+	pathParamExtractor := NewPathParameterExtractor(chi.URLParam)
+	opts := []Option{MiddlewareOpt(pathParamExtractor.Apply)}
+
+	operationsRouter, err := NewRouter(doc.Spec(), handlers, opts...)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	finalRouter := chi.NewRouter()
+	finalRouter.Mount("/", operationsRouter)
+	finalRouter.Handle("/no_operation_resource", pathParamExtractor.Apply(noOpHandler))
+
+	server := httptest.NewServer(finalRouter)
+	client := server.Client()
+
+	// test
+
+	for _, c := range cases {
+		resp, err := client.Get(server.URL + c.url)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		respBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !bytes.Equal([]byte(c.expectedPayload), respBody) {
+			t.Errorf("Expected response body to be\n%s\nbut got\n%s", c.expectedPayload, string(respBody))
 		}
 	}
 
