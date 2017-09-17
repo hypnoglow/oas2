@@ -54,7 +54,7 @@ func TestLoggerOpt(t *testing.T) {
 	lg := &logrus.Logger{Out: ioutil.Discard}
 	opt := LoggerOpt(lg)
 
-	opts := &Options{}
+	opts := &RouterOptions{}
 
 	opt(opts)
 
@@ -67,7 +67,7 @@ func TestBaseRouterOpt(t *testing.T) {
 	baseRouter := defaultBaseRouter()
 	opt := BaseRouterOpt(baseRouter)
 
-	opts := &Options{}
+	opts := &RouterOptions{}
 
 	opt(opts)
 

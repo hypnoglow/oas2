@@ -49,7 +49,7 @@ func TestQueryValidatorMiddleware_Apply(t *testing.T) {
 	})
 
 	qv := NewQueryValidator(doc.Spec(), errHandler)
-	opts := []Option{MiddlewareOpt(qv.Apply)}
+	opts := []RouterOption{MiddlewareOpt(qv.Apply)}
 
 	operationsRouter, err := NewRouter(doc.Spec(), handlers, opts...)
 	if err != nil {
@@ -159,7 +159,7 @@ func TestBodyValidatorMiddleware_Apply(t *testing.T) {
 	})
 
 	bodyValidator := NewBodyValidator(errHandler)
-	opts := []Option{MiddlewareOpt(bodyValidator.Apply)}
+	opts := []RouterOption{MiddlewareOpt(bodyValidator.Apply)}
 
 	operationsRouter, err := NewRouter(doc.Spec(), handlers, opts...)
 	if err != nil {
@@ -234,7 +234,7 @@ func TestPathParameterExtractor_Apply(t *testing.T) {
 	})
 
 	pathParamExtractor := NewPathParameterExtractor(chi.URLParam)
-	opts := []Option{MiddlewareOpt(pathParamExtractor.Apply)}
+	opts := []RouterOption{MiddlewareOpt(pathParamExtractor.Apply)}
 
 	operationsRouter, err := NewRouter(doc.Spec(), handlers, opts...)
 	if err != nil {

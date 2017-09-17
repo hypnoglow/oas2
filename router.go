@@ -13,10 +13,10 @@ import (
 func NewRouter(
 	sw *spec.Swagger,
 	handlers OperationHandlers,
-	options ...Option,
+	options ...RouterOption,
 ) (http.Handler, error) {
 	// Default options.
-	opts := Options{
+	opts := RouterOptions{
 		logger:     &logrus.Logger{Out: ioutil.Discard},
 		baseRouter: defaultBaseRouter(),
 		mws:        make([]MiddlewareFn, 0),
@@ -55,34 +55,34 @@ func NewRouter(
 	return router, nil
 }
 
-// Options is options for oas2 router.
-type Options struct {
+// RouterOptions is options for oas2 router.
+type RouterOptions struct {
 	logger     logrus.FieldLogger
 	baseRouter BaseRouter
 	mws        []MiddlewareFn
 }
 
-// Option is an option for oas2 router.
-type Option func(*Options)
+// RouterOption is an option for oas2 router.
+type RouterOption func(*RouterOptions)
 
 // LoggerOpt returns an option that sets a logger for oas2 router.
-func LoggerOpt(logger logrus.FieldLogger) Option {
-	return func(args *Options) {
+func LoggerOpt(logger logrus.FieldLogger) RouterOption {
+	return func(args *RouterOptions) {
 		args.logger = logger
 	}
 }
 
 // BaseRouterOpt returns an option that sets a BaseRouter for oas2 router.
 // It allows to plug-in your favorite router to the oas2 router.
-func BaseRouterOpt(br BaseRouter) Option {
-	return func(args *Options) {
+func BaseRouterOpt(br BaseRouter) RouterOption {
+	return func(args *RouterOptions) {
 		args.baseRouter = br
 	}
 }
 
 // MiddlewareOpt returns an option that sets a middleware for router operations.
-func MiddlewareOpt(mw MiddlewareFn) Option {
-	return func(args *Options) {
+func MiddlewareOpt(mw MiddlewareFn) RouterOption {
+	return func(args *RouterOptions) {
 		args.mws = append(args.mws, mw)
 	}
 }

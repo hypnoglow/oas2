@@ -36,7 +36,7 @@ func main() {
 	lg := logrus.New()
 	lg.SetLevel(logrus.DebugLevel)
 
-	opts := []oas2.Option{
+	opts := []oas2.RouterOption{
 		oas2.LoggerOpt(lg),
 		oas2.MiddlewareOpt(oas2.NewQueryValidator(doc.Spec(), errHandler).Apply),
 	}
