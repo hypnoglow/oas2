@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/go-chi/chi"
@@ -48,7 +49,7 @@ func TestQueryValidatorMiddleware_Apply(t *testing.T) {
 		fmt.Fprint(w, "hit no operation resource")
 	})
 
-	qv := NewQueryValidator(doc.Spec(), errHandler)
+	qv := NewQueryValidator(writeErrorsToResponseWriter)
 	opts := []RouterOption{MiddlewareOpt(qv.Apply)}
 
 	operationsRouter, err := NewRouter(doc.Spec(), handlers, opts...)
@@ -158,7 +159,7 @@ func TestBodyValidatorMiddleware_Apply(t *testing.T) {
 		fmt.Fprint(w, "hit no operation resource")
 	})
 
-	bodyValidator := NewBodyValidator(errHandler)
+	bodyValidator := NewBodyValidator(writeErrorsToResponseWriter)
 	opts := []RouterOption{MiddlewareOpt(bodyValidator.Apply)}
 
 	operationsRouter, err := NewRouter(doc.Spec(), handlers, opts...)
@@ -271,20 +272,153 @@ func TestPathParameterExtractor_Apply(t *testing.T) {
 	server.Close()
 }
 
-func errHandler(w http.ResponseWriter, errs []error) {
+func TestResponseBodyValidator_Apply(t *testing.T) {
+	cases := []struct {
+		url                string
+		logBuffer          *bytes.Buffer
+		expectedStatusCode int
+		expectedPayload    string
+		expectedLogBuffer  string
+	}{
+		// with validation errors
+		{
+			url:                "/pet/12",
+			logBuffer:          &bytes.Buffer{},
+			expectedStatusCode: http.StatusOK,
+			expectedPayload:    `{"id":123,"name":"Kitty"}` + "\n",
+			expectedLogBuffer:  "response data does not match the schema: field=age value=<nil> message=age in body is required",
+		},
+		// no spec for 500
+		{
+			url:                "/pet/500",
+			logBuffer:          &bytes.Buffer{},
+			expectedStatusCode: http.StatusInternalServerError,
+			expectedPayload:    "Internal Server Error\n",
+		},
+		// no schema for 404
+		{
+			url:                "/pet/13",
+			logBuffer:          &bytes.Buffer{},
+			expectedStatusCode: http.StatusNotFound,
+			expectedPayload:    "404 page not found\n",
+		},
+		{
+			url:                "/pet/badjson",
+			logBuffer:          &bytes.Buffer{},
+			expectedStatusCode: http.StatusOK,
+			expectedPayload:    `{"name":`,
+		},
+		// request an url which handler does not provide operation context
+		{
+			url:                "/no_operation_resource",
+			logBuffer:          &bytes.Buffer{},
+			expectedStatusCode: http.StatusOK,
+			expectedPayload:    "hit no operation resource",
+			expectedLogBuffer:  "",
+		},
+	}
+
+	// set up
+
+	doc := loadDoc()
+
+	handlers := OperationHandlers{"getPetById": http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		// fake not found
+		if req.URL.Path == "/pet/13" {
+			http.NotFound(w, req)
+			return
+		}
+
+		// fake for server error {
+		if req.URL.Path == "/pet/500" {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		// fake for bad json
+		if req.URL.Path == "/pet/badjson" {
+			w.Write([]byte(`{"name":`))
+			return
+		}
+
+		// normal
+
+		type pet struct {
+			ID   int64  `json:"id"`
+			Name string `json:"name"`
+		}
+
+		p := pet{123, "Kitty"}
+
+		if err := json.NewEncoder(w).Encode(p); err != nil {
+			t.Fatalf("Unexpected error: %s", err)
+		}
+	})}
+	noOpHandler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		fmt.Fprint(w, "hit no operation resource")
+	})
+
+	// test
+
+	for _, c := range cases {
+		respBodyValidator := NewResponseBodyValidator(errorLogger(c.logBuffer))
+		opts := []RouterOption{MiddlewareOpt(respBodyValidator.Apply)}
+
+		operationsRouter, err := NewRouter(doc.Spec(), handlers, opts...)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		finalRouter := chi.NewRouter()
+		finalRouter.Mount("/", operationsRouter)
+		finalRouter.Handle("/no_operation_resource", respBodyValidator.Apply(noOpHandler))
+
+		server := httptest.NewServer(finalRouter)
+		client := server.Client()
+
+		resp, err := client.Get(server.URL + c.url)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		respBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if c.expectedStatusCode != resp.StatusCode {
+			t.Errorf("Expected status code to be %v but got %v", c.expectedStatusCode, resp.StatusCode)
+		}
+
+		if !bytes.Equal([]byte(c.expectedPayload), respBody) {
+			t.Errorf("Expected response body to be\n%s\nbut got\n%s", c.expectedPayload, string(respBody))
+		}
+
+		expectedLogBuff := strings.TrimSpace(c.expectedLogBuffer)
+		actualLogBuff := strings.TrimSpace(c.logBuffer.String())
+		if expectedLogBuff != actualLogBuff {
+			t.Errorf("Expected log buffer to be\n%v\nbut got\n%v\n", expectedLogBuff, actualLogBuff)
+		}
+
+		// tear down
+		server.Close()
+	}
+}
+
+type (
+	errorItem struct {
+		Message string      `json:"message"`
+		Field   string      `json:"field,omitempty"`
+		Value   interface{} `json:"value,omitempty"`
+	}
+	payload struct {
+		Errors []errorItem `json:"errors"`
+	}
+)
+
+func helperConvertErrs(errs []error) payload {
 	// This is an example of composing an error for response from validation
 	// errors.
-
-	type (
-		errorItem struct {
-			Message string      `json:"message"`
-			Field   string      `json:"field,omitempty"`
-			Value   interface{} `json:"value,omitempty"`
-		}
-		payload struct {
-			Errors []errorItem `json:"errors"`
-		}
-	)
 
 	type fielder interface {
 		Field() string
@@ -306,6 +440,15 @@ func errHandler(w http.ResponseWriter, errs []error) {
 		p.Errors = append(p.Errors, item)
 	}
 
+	return p
+}
+
+func writeErrorsToResponseWriter(w http.ResponseWriter, errs []error) {
+	// This is an example of composing an error for response from validation
+	// errors.
+
+	p := helperConvertErrs(errs)
+
 	b, err := json.Marshal(p)
 	if err != nil {
 		log.Fatal(err)
@@ -313,5 +456,19 @@ func errHandler(w http.ResponseWriter, errs []error) {
 
 	if _, err := w.Write(b); err != nil {
 		log.Fatal(err)
+	}
+}
+
+func errorLogger(buffer *bytes.Buffer) func(w http.ResponseWriter, errs []error) {
+	l := log.New(buffer, "", 0)
+	return func(w http.ResponseWriter, errs []error) {
+		for _, e := range helperConvertErrs(errs).Errors {
+			l.Printf(
+				"response data does not match the schema: field=%s value=%v message=%s",
+				e.Field,
+				e.Value,
+				e.Message,
+			)
+		}
 	}
 }

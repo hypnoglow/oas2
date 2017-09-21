@@ -52,6 +52,11 @@ func ValidateBody(ps []spec.Parameter, data interface{}) []error {
 	return errs.Errors()
 }
 
+// ValidateBySchema validates data by spec and returns errors if any.
+func ValidateBySchema(sch *spec.Schema, data interface{}) []error {
+	return validatebySchema(sch, data).Errors()
+}
+
 // ValidationError describes validation error.
 type ValidationError interface {
 	error
@@ -114,18 +119,17 @@ func validateQueryParam(p spec.Parameter, q url.Values) (errs ValidationErrors) 
 }
 
 func validateBodyParam(p spec.Parameter, data interface{}) (errs ValidationErrors) {
-	for _, e := range validatebySchema(p.Schema, data) {
-		ve := e.(*errors.Validation)
-		errs = append(errs, ValidationErrorf(strings.TrimPrefix(ve.Name, "."), nil, strings.TrimPrefix(ve.Error(), ".")))
-	}
-	return errs
+	return validatebySchema(p.Schema, data)
 }
 
-func validatebySchema(sch *spec.Schema, data interface{}) (errs []error) {
+func validatebySchema(sch *spec.Schema, data interface{}) (errs ValidationErrors) {
 	err := validate.AgainstSchema(sch, data, strfmt.Default)
 	ves, ok := err.(*errors.CompositeError)
 	if ok && len(ves.Errors) > 0 {
-		errs = append(errs, ves.Errors...)
+		for _, e := range ves.Errors {
+			ve := e.(*errors.Validation)
+			errs = append(errs, ValidationErrorf(strings.TrimPrefix(ve.Name, "."), nil, strings.TrimPrefix(ve.Error(), ".")))
+		}
 	}
 
 	return errs
