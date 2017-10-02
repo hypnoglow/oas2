@@ -1,11 +1,11 @@
-package oas2
+package convert
 
 import (
 	"reflect"
 	"testing"
 )
 
-func TestConvertParameter(t *testing.T) {
+func TestParameter(t *testing.T) {
 	cases := []struct {
 		values        []string
 		typ           string
@@ -40,7 +40,7 @@ func TestConvertParameter(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		v, err := ConvertParameter(c.values, c.typ, c.format)
+		v, err := Parameter(c.values, c.typ, c.format)
 
 		if err != nil && !c.expectError {
 			t.Errorf("Unexpected error: %v", err)
@@ -61,7 +61,7 @@ func TestConvertParameter(t *testing.T) {
 	}
 }
 
-func TestConvertPrimitive(t *testing.T) {
+func TestPrimitive(t *testing.T) {
 	cases := []struct {
 		value         string
 		typ           string
@@ -177,7 +177,7 @@ func TestConvertPrimitive(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		v, err := ConvertPrimitive(c.value, c.typ, c.format)
+		v, err := Primitive(c.value, c.typ, c.format)
 		if err != nil && !c.expectError {
 			t.Errorf("Unexpected error: %v", err)
 		}

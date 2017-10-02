@@ -8,6 +8,9 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/hypnoglow/oas2/convert"
+	"github.com/hypnoglow/oas2/validate"
 )
 
 // MiddlewareFn describes middleware function.
@@ -40,7 +43,7 @@ func (m queryValidatorMiddleware) Apply(next http.Handler) http.Handler {
 			return
 		}
 
-		if errs := ValidateQuery(op.Parameters, req.URL.Query()); len(errs) > 0 {
+		if errs := validate.Query(op.Parameters, req.URL.Query()); len(errs) > 0 {
 			m.errHandler(w, errs)
 			if !m.continueOnError {
 				return
@@ -90,7 +93,7 @@ func (m bodyValidatorMiddleware) Apply(next http.Handler) http.Handler {
 		}
 
 		// Validate body
-		if errs := ValidateBody(op.Parameters, body); len(errs) > 0 {
+		if errs := validate.Body(op.Parameters, body); len(errs) > 0 {
 			m.errHandler(w, errs)
 			return
 		}
@@ -125,7 +128,7 @@ func (m pathParameterExtractor) Apply(next http.Handler) http.Handler {
 				continue
 			}
 
-			value, err := ConvertPrimitive(m.extractor(req, p.Name), p.Type, p.Format)
+			value, err := convert.Primitive(m.extractor(req, p.Name), p.Type, p.Format)
 			if err == nil {
 				req = req.WithContext(
 					context.WithValue(req.Context(), contextKeyPathParam(p.Name), value),
@@ -185,7 +188,7 @@ func (m responseBodyValidator) Apply(next http.Handler) http.Handler {
 			return
 		}
 
-		if errs := ValidateBySchema(responseSpec.Schema, body); len(errs) > 0 {
+		if errs := validate.BySchema(responseSpec.Schema, body); len(errs) > 0 {
 			m.errHandler(w, errs)
 		}
 	})
