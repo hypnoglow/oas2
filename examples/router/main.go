@@ -38,7 +38,7 @@ func main() {
 
 	opts := []oas2.RouterOption{
 		oas2.LoggerOpt(lg),
-		oas2.MiddlewareOpt(oas2.NewQueryValidator(errHandler).Apply),
+		oas2.MiddlewareOpt(oas2.NewQueryValidator(errHandler)),
 	}
 
 	router, err := oas2.NewRouter(doc.Spec(), handlers, opts...)

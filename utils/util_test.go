@@ -1,4 +1,4 @@
-package oas2
+package utils
 
 import (
 	"bytes"

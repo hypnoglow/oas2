@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func ExampleOperationID_String() {
+func ExampleID_String() {
 	opID := OperationID("addPet")
 
 	fmt.Fprint(os.Stdout, opID.String())
