@@ -3,61 +3,80 @@ package convert
 import (
 	"reflect"
 	"testing"
+
+	"github.com/go-openapi/spec"
 )
 
 func TestParameter(t *testing.T) {
-	cases := []struct {
-		values        []string
-		typ           string
-		format        string
-		expectedValue interface{}
-		expectError   bool
-	}{
-		{
-			values:        []string{"John"},
-			typ:           "string",
-			expectedValue: "John",
-			expectError:   false,
-		},
-		{
-			values:        []string{"does not matter"},
-			typ:           "array",
-			expectedValue: nil,
-			expectError:   true,
-		},
-		{
-			values:        []string{"does not matter"},
-			typ:           "file",
-			expectedValue: nil,
-			expectError:   true,
-		},
-		{
-			values:        []string{"John", "Edvard"},
-			typ:           "string",
-			expectedValue: nil,
-			expectError:   true,
-		},
+	t.Run("ok for primitive type", func(t *testing.T) {
+		values := []string{"John"}
+		param := spec.QueryParam("name").Typed("string", "")
+
+		v, err := Parameter(values, param)
+		assertConversionResult(t, "John", v)
+		assertConversionError(t, false, err)
+	})
+
+	t.Run("ok for string array", func(t *testing.T) {
+		values := []string{"Nicolas", "Jonathan"}
+		param := spec.QueryParam("names").Typed("array", "")
+		param.Items = spec.NewItems().Typed("string", "")
+
+		v, err := Parameter(values, param)
+		assertConversionResult(t, []string{"Nicolas", "Jonathan"}, v)
+		assertConversionError(t, false, err)
+	})
+
+	t.Run("fail for array that has no items type", func(t *testing.T) {
+	    values := []string{"does not matter"}
+	    param := spec.QueryParam("names").Typed("array", "")
+
+		v, err := Parameter(values, param)
+		assertConversionResult(t, nil, v)
+		assertConversionError(t, true, err)
+	})
+
+	t.Run("fail for file (not implemented yet)", func(t *testing.T) {
+	    values := []string{"does not matter"}
+		param := spec.FormDataParam("photo").Typed("file", "")
+
+		v, err := Parameter(values, param)
+		assertConversionResult(t, nil, v)
+		assertConversionError(t, true, err)
+	})
+
+	t.Run("fail for multiple values on primitive type", func(t *testing.T) {
+	    values := []string{"John", "Edvard"}
+	    param := spec.QueryParam("name").Typed("string", "")
+
+		v, err := Parameter(values, param)
+		assertConversionResult(t, nil, v)
+		assertConversionError(t, true, err)
+	})
+}
+
+func assertConversionResult(t *testing.T, expectedValue interface{}, v interface{}) {
+	t.Helper()
+
+	if !reflect.DeepEqual(expectedValue, v) {
+		t.Errorf(
+			"Expected value to be %v (%T) but got %v (%T)",
+			expectedValue,
+			expectedValue,
+			v,
+			v,
+		)
 	}
+}
 
-	for _, c := range cases {
-		v, err := Parameter(c.values, c.typ, c.format)
+func assertConversionError(t *testing.T, expectError bool, err error) {
+	t.Helper()
 
-		if err != nil && !c.expectError {
-			t.Errorf("Unexpected error: %v", err)
-		}
-		if err == nil && c.expectError {
-			t.Error("Expected error, but got nil")
-		}
-
-		if !reflect.DeepEqual(c.expectedValue, v) {
-			t.Errorf(
-				"Expected value to be %v (%T) but got %v (%T)",
-				c.expectedValue,
-				c.expectedValue,
-				v,
-				v,
-			)
-		}
+	if err != nil && !expectError {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	if err == nil && expectError {
+		t.Error("Expected error, but got nil")
 	}
 }
 

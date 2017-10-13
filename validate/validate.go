@@ -105,7 +105,7 @@ func validateQueryParam(p spec.Parameter, q url.Values) (errs ValidationErrors) 
 		return errs
 	}
 
-	value, err := convert.Parameter(q[p.Name], p.Type, p.Format)
+	value, err := convert.Parameter(q[p.Name], &p)
 	if err != nil {
 		// TODO: q.Get(p.Name) relies on type that is not array/file.
 		return append(errs, ValidationErrorf(p.Name, q.Get(p.Name), "param %s: %s", p.Name, err))
