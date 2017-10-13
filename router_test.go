@@ -52,15 +52,18 @@ func TestNewRouter(t *testing.T) {
 
 func TestLoggerOpt(t *testing.T) {
 	lg := &logrus.Logger{Out: ioutil.Discard}
-	opt := LoggerOpt(lg)
+	w := lg.Writer()
+	opt := LoggerOpt(w)
 
 	opts := &RouterOptions{}
 
 	opt(opts)
 
-	if !reflect.DeepEqual(opts.logger, lg) {
-		t.Fatalf("Expected logger to be %v but got %v", lg, opts.logger)
+	if !reflect.DeepEqual(opts.logger, w) {
+		t.Fatalf("Expected logger to be %v but got %v", w, opts.logger)
 	}
+
+	logf(opts.logger, "Hello, logger!")
 }
 
 func TestBaseRouterOpt(t *testing.T) {
