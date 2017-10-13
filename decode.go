@@ -47,7 +47,7 @@ func DecodeQuery(ps []spec.Parameter, q url.Values, dst interface{}) error {
 		}
 
 		// Convert value by type+format in parameter.
-		v, err := convert.Parameter(vals, p.Type, p.Format)
+		v, err := convert.Parameter(vals, &p)
 		if err != nil {
 			return fmt.Errorf(
 				"cannot use values %v as parameter %s with type %s and format %s",
