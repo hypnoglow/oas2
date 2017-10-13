@@ -13,13 +13,13 @@ func TestPathParameterExtractor(t *testing.T) {
 	handlers := OperationHandlers{
 		"getPetById": http.HandlerFunc(handleGetPetByID),
 	}
-	router, err := NewRouter(loadDoc().Spec(), handlers, MiddlewareFnOpt(NewPathParameterExtractor(chi.URLParam).Apply))
+	router, err := NewRouter(loadDoc().Spec(), handlers, Use(NewPathParameterExtractor(chi.URLParam)))
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}
 
 	t.Run("positive", func(t *testing.T) {
-		resp, _ := helperGet(t, router, "/pet/12")
+		resp, _ := helperGet(t, router, "/v2/pet/12")
 		expectedPayload := "pet by id: 12"
 		if !bytes.Equal([]byte(expectedPayload), resp) {
 			t.Fatalf("Expected response body to be\n%s\nbut got\n%s", expectedPayload, string(resp))
