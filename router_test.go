@@ -62,6 +62,8 @@ func TestLoggerOpt(t *testing.T) {
 	if !reflect.DeepEqual(opts.logger, w) {
 		t.Fatalf("Expected logger to be %v but got %v", w, opts.logger)
 	}
+
+	logf(opts.logger, "Hello, logger!")
 }
 
 func TestBaseRouterOpt(t *testing.T) {
