@@ -1,23 +1,28 @@
 package oas2
 
 import (
-	"io/ioutil"
+	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/go-openapi/analysis"
 	"github.com/go-openapi/spec"
-	"github.com/sirupsen/logrus"
 )
+
+// Router routes requests based on OAS 2.0 spec operations.
+type Router interface {
+	http.Handler
+}
 
 // NewRouter returns http.Handler that routes requests based on OAS 2.0 spec.
 func NewRouter(
 	sw *spec.Swagger,
 	handlers OperationHandlers,
 	options ...RouterOption,
-) (http.Handler, error) {
+) (Router, error) {
 	// Default options.
 	opts := RouterOptions{
-		logger:     &logrus.Logger{Out: ioutil.Discard},
+		logger:     nil,
 		baseRouter: defaultBaseRouter(),
 		mws:        make([]MiddlewareFn, 0),
 	}
@@ -33,7 +38,7 @@ func NewRouter(
 		for path, op := range pathOps {
 			handler, ok := handlers[OperationID(op.ID)]
 			if !ok {
-				opts.logger.Warnf("oas2 router: no handler registered for operation %s", op.ID)
+				logf(opts.logger, "oas2 router: no handler registered for operation %s", op.ID)
 				continue
 			}
 
@@ -43,7 +48,7 @@ func NewRouter(
 				handler = mwf(handler)
 			}
 
-			opts.logger.Debugf("oas2 router: handle: %s %s", method, path)
+			logf(opts.logger, "oas2 router: handle: %s %s", method, path)
 			handler = NewOperationMiddleware(op).Apply(handler)
 			subrouter.Route(method, path, handler)
 		}
@@ -57,7 +62,7 @@ func NewRouter(
 
 // RouterOptions is options for oas2 router.
 type RouterOptions struct {
-	logger     logrus.FieldLogger
+	logger     io.Writer
 	baseRouter BaseRouter
 	mws        []MiddlewareFn
 }
@@ -66,7 +71,7 @@ type RouterOptions struct {
 type RouterOption func(*RouterOptions)
 
 // LoggerOpt returns an option that sets a logger for oas2 router.
-func LoggerOpt(logger logrus.FieldLogger) RouterOption {
+func LoggerOpt(logger io.Writer) RouterOption {
 	return func(args *RouterOptions) {
 		args.logger = logger
 	}
@@ -99,4 +104,11 @@ type BaseRouter interface {
 	Route(method string, pathPattern string, handler http.Handler)
 	Mount(path string, handler http.Handler)
 	ServeHTTP(w http.ResponseWriter, req *http.Request)
+}
+
+func logf(w io.Writer, format string, args ...interface{}) {
+	if w == nil {
+		return
+	}
+	fmt.Fprintf(w, format, args)
 }
