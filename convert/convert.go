@@ -4,20 +4,25 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/go-openapi/spec"
 )
 
 // Parameter converts parameter's value(s) according to parameter's type
 // and format. Type and format MUST match OAS 2.0.
 // https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#parameterObject
-func Parameter(vals []string, typ, format string) (value interface{}, err error) {
-	if typ == "array" {
-		// TODO
-		return nil, fmt.Errorf("type %s: NOT IMPLEMENTED", typ)
+func Parameter(vals []string, param *spec.Parameter) (value interface{}, err error) {
+	if param.Type == "array" {
+		if param.Items == nil {
+			return nil, fmt.Errorf("type array has no `items` field")
+		}
+
+		return Array(vals, param.Items.Type, param.Items.Format)
 	}
 
-	if typ == "file" {
+	if param.Type == "file" {
 		// TODO
-		return nil, fmt.Errorf("type %s: NOT IMPLEMENTED", typ)
+		return nil, fmt.Errorf("type %s: NOT IMPLEMENTED", param.Type)
 	}
 
 	if len(vals) != 1 {
@@ -27,7 +32,7 @@ func Parameter(vals []string, typ, format string) (value interface{}, err error)
 		)
 	}
 
-	return Primitive(vals[0], typ, format)
+	return Primitive(vals[0], param.Type, param.Format)
 }
 
 // Primitive converts string values according to type and format described
