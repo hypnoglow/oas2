@@ -1,4 +1,4 @@
-package oas2
+package convert
 
 import (
 	"fmt"
@@ -6,10 +6,10 @@ import (
 	"strings"
 )
 
-// ConvertParameter converts parameter's value(s) according to parameter's type
+// Parameter converts parameter's value(s) according to parameter's type
 // and format. Type and format MUST match OAS 2.0.
 // https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#parameterObject
-func ConvertParameter(vals []string, typ, format string) (value interface{}, err error) {
+func Parameter(vals []string, typ, format string) (value interface{}, err error) {
 	if typ == "array" {
 		// TODO
 		return nil, fmt.Errorf("type %s: NOT IMPLEMENTED", typ)
@@ -27,13 +27,13 @@ func ConvertParameter(vals []string, typ, format string) (value interface{}, err
 		)
 	}
 
-	return ConvertPrimitive(vals[0], typ, format)
+	return Primitive(vals[0], typ, format)
 }
 
-// ConvertPrimitive converts string values according to type and format described
+// Primitive converts string values according to type and format described
 // in OAS 2.0.
 // https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#parameterObject
-func ConvertPrimitive(val string, typ, format string) (value interface{}, err error) {
+func Primitive(val string, typ, format string) (value interface{}, err error) {
 	switch typ {
 	case "string":
 		return convertString(val, format)

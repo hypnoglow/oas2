@@ -1,4 +1,4 @@
-package oas2
+package validate
 
 import (
 	"fmt"
@@ -9,11 +9,13 @@ import (
 	"github.com/go-openapi/spec"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/validate"
+
+	"github.com/hypnoglow/oas2/convert"
 )
 
-// ValidateQuery validates request query parameters by spec and returns errors
+// Query validates request query parameters by spec and returns errors
 // if any.
-func ValidateQuery(ps []spec.Parameter, q url.Values) []error {
+func Query(ps []spec.Parameter, q url.Values) []error {
 	errs := make(ValidationErrors, 0)
 
 	// Iterate over spec parameters and validate each against the spec.
@@ -36,8 +38,8 @@ func ValidateQuery(ps []spec.Parameter, q url.Values) []error {
 	return errs.Errors()
 }
 
-// ValidateBody validates request body by spec and returns errors if any.
-func ValidateBody(ps []spec.Parameter, data interface{}) []error {
+// Body validates request body by spec and returns errors if any.
+func Body(ps []spec.Parameter, data interface{}) []error {
 	errs := make(ValidationErrors, 0)
 
 	for _, p := range ps {
@@ -52,8 +54,8 @@ func ValidateBody(ps []spec.Parameter, data interface{}) []error {
 	return errs.Errors()
 }
 
-// ValidateBySchema validates data by spec and returns errors if any.
-func ValidateBySchema(sch *spec.Schema, data interface{}) []error {
+// BySchema validates data by spec and returns errors if any.
+func BySchema(sch *spec.Schema, data interface{}) []error {
 	return validatebySchema(sch, data).Errors()
 }
 
@@ -103,7 +105,7 @@ func validateQueryParam(p spec.Parameter, q url.Values) (errs ValidationErrors) 
 		return errs
 	}
 
-	value, err := ConvertParameter(q[p.Name], p.Type, p.Format)
+	value, err := convert.Parameter(q[p.Name], p.Type, p.Format)
 	if err != nil {
 		// TODO: q.Get(p.Name) relies on type that is not array/file.
 		return append(errs, ValidationErrorf(p.Name, q.Get(p.Name), "param %s: %s", p.Name, err))

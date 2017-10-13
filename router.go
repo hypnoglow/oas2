@@ -44,7 +44,7 @@ func NewRouter(
 			}
 
 			opts.logger.Debugf("oas2 router: handle: %s %s", method, path)
-			handler = operationIDMiddleware(handler, op)
+			handler = NewOperationMiddleware(op).Apply(handler)
 			subrouter.Route(method, path, handler)
 		}
 	}
@@ -81,7 +81,14 @@ func BaseRouterOpt(br BaseRouter) RouterOption {
 }
 
 // MiddlewareOpt returns an option that sets a middleware for router operations.
-func MiddlewareOpt(mw MiddlewareFn) RouterOption {
+func MiddlewareOpt(mw Middleware) RouterOption {
+	return func(args *RouterOptions) {
+		args.mws = append(args.mws, mw.Apply)
+	}
+}
+
+// MiddlewareFnOpt returns an option that sets a middleware for router operations.
+func MiddlewareFnOpt(mw MiddlewareFn) RouterOption {
 	return func(args *RouterOptions) {
 		args.mws = append(args.mws, mw)
 	}

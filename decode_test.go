@@ -9,6 +9,36 @@ import (
 	"github.com/go-openapi/spec"
 )
 
+func ExampleDecodeQuery() {
+	// In real app parameters will be taken from spec document (yaml or json).
+	params := []spec.Parameter{
+		*spec.QueryParam("name").Typed("string", ""),
+		*spec.QueryParam("age").Typed("integer", "int32"),
+		*spec.QueryParam("loves_apples").Typed("boolean", "").
+			AsRequired().
+			WithDefault(true),
+	}
+
+	// In real app query will be taken from *http.Request.
+	query := url.Values{"name": []string{"John"}, "age": []string{"27"}}
+
+	type member struct {
+		Name        string `oas:"name"`
+		Age         int32  `oas:"age"`
+		LovesApples bool   `oas:"loves_apples"`
+	}
+
+	var m member
+	if err := DecodeQuery(params, query, &m); err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("%#v", m)
+
+	// Output:
+	// oas2.member{Name:"John", Age:27, LovesApples:true}
+}
+
 func TestDecodeQuery(t *testing.T) {
 	type (
 		user struct {
