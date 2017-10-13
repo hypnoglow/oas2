@@ -90,7 +90,7 @@ paths:
     get:
       tags:
       - "pet"
-      summary: "Find pet by OperationID"
+      summary: "Find pet by ID"
       description: "Returns a single pet"
       operationId: "getPetById"
       produces:
@@ -98,7 +98,7 @@ paths:
       parameters:
       - name: "petId"
         in: "path"
-        description: "OperationID of pet to return"
+        description: "ID of pet to return"
         required: true
         type: "integer"
         format: "int64"
@@ -111,7 +111,7 @@ paths:
           schema:
             $ref: "#/definitions/Pet"
         400:
-          description: "Invalid OperationID supplied"
+          description: "Invalid ID supplied"
         404:
           description: "Pet not found"
       security:
