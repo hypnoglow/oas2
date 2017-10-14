@@ -16,14 +16,14 @@ func TestResponseBodyValidator(t *testing.T) {
 		"getPetById": http.HandlerFunc(handleGetPetByIDFaked),
 	}
 	logBuffer := &bytes.Buffer{}
-	router, err := NewRouter(loadDoc().Spec(), handlers, MiddlewareOpt(NewResponseBodyValidator(responseErrorHandler(logBuffer))))
+	router, err := NewRouter(loadDoc().Spec(), handlers, Use(NewResponseBodyValidator(responseErrorHandler(logBuffer))))
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}
 
 	t.Run("positive", func(t *testing.T) {
 		logBuffer.Reset()
-		resp, statusCode := helperGet(t, router, "/pet/12")
+		resp, statusCode := helperGet(t, router, "/v2/pet/12")
 		respBody := strings.TrimSpace(string(resp))
 
 		expectedStatusCode := http.StatusOK
@@ -46,7 +46,7 @@ func TestResponseBodyValidator(t *testing.T) {
 
 	t.Run("no spec for 500", func(t *testing.T) {
 		logBuffer.Reset()
-		resp, statusCode := helperGet(t, router, "/pet/500")
+		resp, statusCode := helperGet(t, router, "/v2/pet/500")
 		respBody := strings.TrimSpace(string(resp))
 
 		expectedStatusCode := http.StatusInternalServerError
@@ -69,7 +69,7 @@ func TestResponseBodyValidator(t *testing.T) {
 
 	t.Run("no schema for 404", func(t *testing.T) {
 		logBuffer.Reset()
-		resp, statusCode := helperGet(t, router, "/pet/404")
+		resp, statusCode := helperGet(t, router, "/v2/pet/404")
 		respBody := strings.TrimSpace(string(resp))
 
 		expectedStatusCode := http.StatusNotFound
@@ -92,7 +92,7 @@ func TestResponseBodyValidator(t *testing.T) {
 
 	t.Run("bad json body", func(t *testing.T) {
 		logBuffer.Reset()
-		resp, statusCode := helperGet(t, router, "/pet/badjson")
+		resp, statusCode := helperGet(t, router, "/v2/pet/badjson")
 
 		expectedStatusCode := http.StatusOK
 		expectedPayload := `{"name":`
@@ -130,19 +130,19 @@ func TestResponseBodyValidator(t *testing.T) {
 
 func handleGetPetByIDFaked(w http.ResponseWriter, req *http.Request) {
 	// fake not found
-	if req.URL.Path == "/pet/404" {
+	if req.URL.Path == "/v2/pet/404" {
 		http.NotFound(w, req)
 		return
 	}
 
 	// fake for server error {
-	if req.URL.Path == "/pet/500" {
+	if req.URL.Path == "/v2/pet/500" {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
 	// fake for bad json
-	if req.URL.Path == "/pet/badjson" {
+	if req.URL.Path == "/v2/pet/badjson" {
 		w.Write([]byte(`{"name":`))
 		return
 	}

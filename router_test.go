@@ -50,31 +50,31 @@ func TestNewRouter(t *testing.T) {
 	server.Close()
 }
 
-func TestLoggerOpt(t *testing.T) {
+func TestDebugLog(t *testing.T) {
 	lg := &logrus.Logger{Out: ioutil.Discard}
 	w := lg.Writer()
-	opt := LoggerOpt(w)
+	opt := DebugLog(w)
 
-	opts := &RouterOptions{}
+	router := &Router{}
 
-	opt(opts)
+	opt(router)
 
-	if !reflect.DeepEqual(opts.logger, w) {
-		t.Fatalf("Expected logger to be %v but got %v", w, opts.logger)
+	if !reflect.DeepEqual(router.debugLog, w) {
+		t.Fatalf("Expected debugLog to be %v but got %v", w, router.debugLog)
 	}
 
-	logf(opts.logger, "Hello, logger!")
+	logf(router.debugLog, "Hello, debugLog!")
 }
 
 func TestBaseRouterOpt(t *testing.T) {
 	baseRouter := defaultBaseRouter()
-	opt := BaseRouterOpt(baseRouter)
+	opt := Base(baseRouter)
 
-	opts := &RouterOptions{}
+	router := &Router{}
 
-	opt(opts)
+	opt(router)
 
-	if !reflect.DeepEqual(opts.baseRouter, baseRouter) {
-		t.Fatalf("Expected base router to be %v but got %v", baseRouter, opts.baseRouter)
+	if !reflect.DeepEqual(router.baseRouter, baseRouter) {
+		t.Fatalf("Expected base router to be %v but got %v", baseRouter, router.baseRouter)
 	}
 }

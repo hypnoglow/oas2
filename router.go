@@ -10,100 +10,99 @@ import (
 )
 
 // Router routes requests based on OAS 2.0 spec operations.
-type Router interface {
-	http.Handler
+type Router struct {
+	debugLog   io.Writer
+	baseRouter BaseRouter
+	mws        []MiddlewareFunc
 }
 
-// NewRouter returns http.Handler that routes requests based on OAS 2.0 spec.
+// ServeHTTP implements http.Handler.
+func (r Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	r.baseRouter.ServeHTTP(w, req)
+}
+
+// NewRouter returns a new Router.
 func NewRouter(
 	sw *spec.Swagger,
 	handlers OperationHandlers,
 	options ...RouterOption,
 ) (Router, error) {
 	// Default options.
-	opts := RouterOptions{
-		logger:     nil,
+	router := Router{
+		debugLog:   nil,
 		baseRouter: defaultBaseRouter(),
-		mws:        make([]MiddlewareFn, 0),
+		mws:        make([]MiddlewareFunc, 0),
 	}
 
 	// Apply argument options.
 	for _, o := range options {
-		o(&opts)
+		o(&router)
 	}
 
-	// Subrouter handles all the spec operations.
-	subrouter := opts.baseRouter
+	// Router handles all the spec operations.
+	base := router.baseRouter
 	for method, pathOps := range analysis.New(sw).Operations() {
 		for path, op := range pathOps {
 			handler, ok := handlers[OperationID(op.ID)]
 			if !ok {
-				logf(opts.logger, "oas2 router: no handler registered for operation %s", op.ID)
+				logf(router.debugLog, "oas2 base: no handler registered for operation %s", op.ID)
 				continue
 			}
 
 			// Apply custom middleware before the operationIDMiddleware so
 			// they can use the OptionID.
-			for _, mwf := range opts.mws {
+			for _, mwf := range router.mws {
 				handler = mwf(handler)
 			}
 
-			logf(opts.logger, "oas2 router: handle: %s %s", method, path)
+			logf(router.debugLog, "oas2 base: handle: %s %s", method, sw.BasePath+path)
 			handler = NewOperationMiddleware(op).Apply(handler)
-			subrouter.Route(method, path, handler)
+			base.Route(method, sw.BasePath+path, handler)
 		}
 	}
 
-	// Mount the subrouter under the spec's basePath.
-	router := opts.baseRouter
-	router.Mount(sw.BasePath, subrouter)
 	return router, nil
 }
 
-// RouterOptions is options for oas2 router.
-type RouterOptions struct {
-	logger     io.Writer
-	baseRouter BaseRouter
-	mws        []MiddlewareFn
+// BaseRouter is an underlying router used in oas2 router.
+// Any third-party router can be a BaseRouter by using an adapter pattern.
+type BaseRouter interface {
+	http.Handler
+	Route(method string, pathPattern string, handler http.Handler)
 }
 
 // RouterOption is an option for oas2 router.
-type RouterOption func(*RouterOptions)
+type RouterOption func(*Router)
 
-// LoggerOpt returns an option that sets a logger for oas2 router.
-func LoggerOpt(logger io.Writer) RouterOption {
-	return func(args *RouterOptions) {
-		args.logger = logger
+// DebugLog returns an option that sets a debug log for oas2 router.
+// Debug log may help to see what router operations will be handled and what
+// will be not.
+func DebugLog(log io.Writer) RouterOption {
+	return func(args *Router) {
+		args.debugLog = log
 	}
 }
 
-// BaseRouterOpt returns an option that sets a BaseRouter for oas2 router.
+// Base returns an option that sets a BaseRouter for oas2 router.
 // It allows to plug-in your favorite router to the oas2 router.
-func BaseRouterOpt(br BaseRouter) RouterOption {
-	return func(args *RouterOptions) {
+func Base(br BaseRouter) RouterOption {
+	return func(args *Router) {
 		args.baseRouter = br
 	}
 }
 
-// MiddlewareOpt returns an option that sets a middleware for router operations.
-func MiddlewareOpt(mw Middleware) RouterOption {
-	return func(args *RouterOptions) {
+// Use returns an option that sets a middleware for router operations.
+func Use(mw Middleware) RouterOption {
+	return func(args *Router) {
 		args.mws = append(args.mws, mw.Apply)
 	}
 }
 
-// MiddlewareFnOpt returns an option that sets a middleware for router operations.
-func MiddlewareFnOpt(mw MiddlewareFn) RouterOption {
-	return func(args *RouterOptions) {
+// UseFunc returns an option that sets a middleware for router operations.
+func UseFunc(mw MiddlewareFunc) RouterOption {
+	return func(args *Router) {
 		args.mws = append(args.mws, mw)
 	}
-}
-
-// BaseRouter is an underlying router used in oas2 router.
-type BaseRouter interface {
-	Route(method string, pathPattern string, handler http.Handler)
-	Mount(path string, handler http.Handler)
-	ServeHTTP(w http.ResponseWriter, req *http.Request)
 }
 
 func logf(w io.Writer, format string, args ...interface{}) {

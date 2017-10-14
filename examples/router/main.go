@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/go-chi/chi"
 	"github.com/go-openapi/loads"
 	"github.com/go-openapi/spec"
 	"github.com/go-openapi/strfmt"
@@ -33,15 +34,21 @@ func main() {
 		"getInventory": http.HandlerFunc(getStoreInventory),
 	}
 
+	// We are using logrus as a debug logger for router.
 	lg := logrus.New()
 	lg.SetLevel(logrus.DebugLevel)
+	debugWriter := lg.WriterLevel(logrus.DebugLevel)
 
-	opts := []oas2.RouterOption{
-		oas2.LoggerOpt(lg.WriterLevel(logrus.DebugLevel)),
-		oas2.MiddlewareOpt(oas2.NewQueryValidator(errHandler)),
-	}
+	// We are using chi as base router.
+	baseRouter := chi.NewRouter()
 
-	router, err := oas2.NewRouter(doc.Spec(), handlers, opts...)
+	router, err := oas2.NewRouter(
+		doc.Spec(),
+		handlers,
+		oas2.Base(oas2.ChiAdapter(baseRouter)),
+		oas2.DebugLog(debugWriter),
+		oas2.Use(oas2.NewQueryValidator(errHandler)),
+	)
 	if err != nil {
 		log.Fatalln(err)
 	}

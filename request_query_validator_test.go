@@ -13,7 +13,7 @@ func TestQueryValidator(t *testing.T) {
 	handlers := OperationHandlers{
 		"loginUser": http.HandlerFunc(handleUserLogin),
 	}
-	router, err := NewRouter(loadDoc().Spec(), handlers, MiddlewareOpt(NewQueryValidator(validationErrorsHandler)))
+	router, err := NewRouter(loadDoc().Spec(), handlers, Use(NewQueryValidator(validationErrorsHandler)))
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}
