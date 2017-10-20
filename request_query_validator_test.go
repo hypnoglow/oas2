@@ -13,7 +13,8 @@ func TestQueryValidator(t *testing.T) {
 	handlers := OperationHandlers{
 		"loginUser": http.HandlerFunc(handleUserLogin),
 	}
-	router, err := NewRouter(loadDoc().Spec(), handlers, Use(NewQueryValidator(validationErrorsHandler)))
+	errHandler := makeErrorHandler()
+	router, err := NewRouter(loadDoc().Spec(), handlers, Use(NewQueryValidator(errHandler)))
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}
@@ -37,7 +38,7 @@ func TestQueryValidator(t *testing.T) {
 	resourceHandler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprint(w, "hit no operation resource")
 	})
-	handler := NewQueryValidator(validationErrorsHandler).Apply(resourceHandler)
+	handler := NewQueryValidator(errHandler).Apply(resourceHandler)
 	noopRouter := chi.NewRouter()
 	noopRouter.Handle("/resource", handler)
 

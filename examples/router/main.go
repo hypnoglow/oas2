@@ -3,16 +3,11 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
 
 	"github.com/go-chi/chi"
-	"github.com/go-openapi/loads"
-	"github.com/go-openapi/spec"
-	"github.com/go-openapi/strfmt"
-	"github.com/go-openapi/validate"
 	"github.com/sirupsen/logrus"
 
 	"github.com/hypnoglow/oas2"
@@ -23,7 +18,7 @@ func main() {
 	flag.StringVar(&specPath, "spec", "", "Path to spec.yaml")
 	flag.Parse()
 
-	doc, err := loadSpecDoc(specPath)
+	doc, err := oas2.LoadSpec(specPath)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -37,16 +32,18 @@ func main() {
 	// We are using logrus as a debug logger for router.
 	lg := logrus.New()
 	lg.SetLevel(logrus.DebugLevel)
-	debugWriter := lg.WriterLevel(logrus.DebugLevel)
 
 	// We are using chi as base router.
 	baseRouter := chi.NewRouter()
+
+	// Prepare error handler.
+	errHandler := middlewareErrorHandler(lg)
 
 	router, err := oas2.NewRouter(
 		doc.Spec(),
 		handlers,
 		oas2.Base(oas2.ChiAdapter(baseRouter)),
-		oas2.DebugLog(debugWriter),
+		oas2.DebugLog(lg.Debugf),
 		oas2.Use(oas2.NewQueryValidator(errHandler)),
 	)
 	if err != nil {
@@ -74,7 +71,24 @@ func getStoreInventory(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func errHandler(w http.ResponseWriter, errs []error) {
+func middlewareErrorHandler(log logrus.FieldLogger) oas2.RequestErrorHandler {
+	return func(w http.ResponseWriter, req *http.Request, err error) (resume bool) {
+
+		switch err.(type) {
+		case oas2.ValidationError:
+			e := err.(oas2.ValidationError)
+			respondClientErrors(w, e.Errors())
+			return false // do not continue
+
+		default:
+			log.Error("oas2 middleware: %s", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return false
+		}
+	}
+}
+
+func respondClientErrors(w http.ResponseWriter, errs []error) {
 	// This is an example of composing an error for the response
 	// from validation errors.
 
@@ -112,22 +126,4 @@ func errHandler(w http.ResponseWriter, errs []error) {
 	if err := json.NewEncoder(w).Encode(p); err != nil {
 		log.Fatalln(err)
 	}
-}
-
-// loadSpecDoc loads a OpenAPI 2.0 Specification document.
-func loadSpecDoc(path string) (*loads.Document, error) {
-	document, err := loads.Spec(path)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to load spec: %s", err)
-	}
-
-	if err := spec.ExpandSpec(document.Spec(), &spec.ExpandOptions{RelativeBase: path}); err != nil {
-		return nil, fmt.Errorf("Failed to expand spec: %s", err)
-	}
-
-	if err := validate.Spec(document, strfmt.Default); err != nil {
-		return nil, fmt.Errorf("Spec is invalid: %s", err)
-	}
-
-	return document, nil
 }

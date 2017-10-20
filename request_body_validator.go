@@ -13,18 +13,27 @@ import (
 
 // NewBodyValidator returns new Middleware that validates request body
 // against parameters defined in OpenAPI 2.0 spec.
-func NewBodyValidator(errHandler func(w http.ResponseWriter, errs []error)) Middleware {
+func NewBodyValidator(errHandler RequestErrorHandler) Middleware {
 	return bodyValidatorMiddleware{
 		errHandler: errHandler,
 	}
 }
 
 type bodyValidatorMiddleware struct {
-	errHandler func(w http.ResponseWriter, errs []error)
+	errHandler RequestErrorHandler
 }
 
 func (m bodyValidatorMiddleware) Apply(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		// TODO
+		if req.Header.Get("Content-Type") != "application/json" {
+			// Do not validate multipart/form.
+			// There will be built-in validation in oas2 package,
+			// but currently it's cumbersome to implement.
+			next.ServeHTTP(w, req)
+			return
+		}
+
 		if req.Body == http.NoBody {
 			next.ServeHTTP(w, req)
 			return
@@ -45,14 +54,18 @@ func (m bodyValidatorMiddleware) Apply(next http.Handler) http.Handler {
 
 		var body interface{}
 		if err := json.NewDecoder(tr).Decode(&body); err != nil {
-			m.errHandler(w, []error{fmt.Errorf("Body contains invalid json")})
-			return
+			err = JsonError{error: fmt.Errorf("json decode: %s", err)}
+			if !m.errHandler(w, req, err) {
+				return
+			}
 		}
 
 		// Validate body
 		if errs := validate.Body(op.Parameters, body); len(errs) > 0 {
-			m.errHandler(w, errs)
-			return
+			err := ValidationError{error: fmt.Errorf("validation error"), errs: errs}
+			if !m.errHandler(w, req, err) {
+				return
+			}
 		}
 
 		// Replace the body so it can be read again.
