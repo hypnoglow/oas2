@@ -27,16 +27,8 @@ Given a spec: [petstore.yaml](examples/petstore.yaml)
 First of all, load your spec in your app:
 
 ```go
-import (
-    "github.com/go-openapi/loads"
-    "github.com/go-openapi/spec"
-)
-```
-
-```go
 // path is a path to your spec file.
-doc, _ := loads.Spec(path)
-spec.ExpandSpec(doc.Spec(), &spec.ExpandOptions{RelativeBase: path})
+doc, _ := oas2.LoadSpec(specPath)
 ```
 
 Next, create an [operation](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#operationObject) handler. 
@@ -66,7 +58,8 @@ Define what options (logger, middleware) you will use:
 
 ```go
 logger := logrus.New()
-queryValidator := oas2.NewQueryValidator(doc.Spec(), errHandler)
+logger.SetLevel(logrus.DebugLevel)
+queryValidator := oas2.NewQueryValidator(errHandler)
 ```
 
 Create a router:
@@ -75,8 +68,8 @@ Create a router:
 router, _ := oas2.NewRouter(
     doc.Spec(), 
     handlers, 
-    oas2.LoggerOpt(logger), 
-    oas2.MiddlewareOpt(queryValidator.Apply)
+    oas2.DebugLog(logger.Debugf), 
+    oas2.Use(queryValidator)
 )
 ```
 
@@ -134,7 +127,7 @@ oas2.DecodeQuery(paramSpec, req.URL.Query(), &m)
 fmt.Printf("%#v", m) // Member{Name:"John", Age:27, LovesApples:true}
 ```
 
-See [`examples/`](https://github.com/hypnoglow/oas2/tree/master/examples) directory for complete examples.
+See [`godoc example`](https://godoc.org/github.com/hypnoglow/oas2#example-DecodeQuery) for complete example code.
 
 ## License
 

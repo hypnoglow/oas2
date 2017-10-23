@@ -6,6 +6,7 @@ import (
 	"reflect"
 
 	"github.com/go-openapi/spec"
+
 	"github.com/hypnoglow/oas2/convert"
 )
 
