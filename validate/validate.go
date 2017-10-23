@@ -1,3 +1,16 @@
+// Package validate provides utilities that allow to validate request and
+// response data against OpenAPI Specification parameter and schema definitions.
+//
+// Note that errors returned from validation functions are generally of type
+// Error, so they can be asserted to corresponding interface(s) to retrieve
+// error's field and value.
+//  errs := validate.Query(ps, q)
+//  for _, err := range errs {
+//      if e, ok := err.(validate.Error) {
+//          field, value := e.Field(), e.Value()
+//          // ...
+//      }
+//  }
 package validate
 
 import (

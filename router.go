@@ -1,8 +1,6 @@
 package oas2
 
 import (
-	"fmt"
-	"io"
 	"net/http"
 
 	"github.com/go-openapi/analysis"
@@ -11,7 +9,7 @@ import (
 
 // Router routes requests based on OAS 2.0 spec operations.
 type Router struct {
-	debugLog   io.Writer
+	debugLog   LogWriter
 	baseRouter BaseRouter
 	mws        []MiddlewareFunc
 }
@@ -45,7 +43,7 @@ func NewRouter(
 		for path, op := range pathOps {
 			handler, ok := handlers[OperationID(op.ID)]
 			if !ok {
-				logf(router.debugLog, "oas2 base: no handler registered for operation %s", op.ID)
+				logf(router.debugLog, "oas2: no handler registered for operation %s", op.ID)
 				continue
 			}
 
@@ -55,8 +53,8 @@ func NewRouter(
 				handler = mwf(handler)
 			}
 
-			logf(router.debugLog, "oas2 base: handle: %s %s", method, sw.BasePath+path)
-			handler = NewOperationMiddleware(op).Apply(handler)
+			logf(router.debugLog, "oas2: handle %s %s", method, sw.BasePath+path)
+			handler = newOperationMiddleware(op).Apply(handler)
 			base.Route(method, sw.BasePath+path, handler)
 		}
 	}
@@ -65,11 +63,15 @@ func NewRouter(
 }
 
 // BaseRouter is an underlying router used in oas2 router.
-// Any third-party router can be a BaseRouter by using an adapter pattern.
+// Any third-party router can be a BaseRouter by using adapter pattern.
 type BaseRouter interface {
 	http.Handler
 	Route(method string, pathPattern string, handler http.Handler)
 }
+
+// LogWriter logs router operations that will be handled and what will be not
+// during router creation. Useful for debugging.
+type LogWriter func(format string, args ...interface{})
 
 // RouterOption is an option for oas2 router.
 type RouterOption func(*Router)
@@ -77,9 +79,9 @@ type RouterOption func(*Router)
 // DebugLog returns an option that sets a debug log for oas2 router.
 // Debug log may help to see what router operations will be handled and what
 // will be not.
-func DebugLog(log io.Writer) RouterOption {
+func DebugLog(lw LogWriter) RouterOption {
 	return func(args *Router) {
-		args.debugLog = log
+		args.debugLog = lw
 	}
 }
 
@@ -105,9 +107,9 @@ func UseFunc(mw MiddlewareFunc) RouterOption {
 	}
 }
 
-func logf(w io.Writer, format string, args ...interface{}) {
+func logf(w LogWriter, format string, args ...interface{}) {
 	if w == nil {
 		return
 	}
-	fmt.Fprintf(w, format, args)
+	w(format, args...)
 }

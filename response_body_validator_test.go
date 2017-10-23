@@ -16,7 +16,9 @@ func TestResponseBodyValidator(t *testing.T) {
 		"getPetById": http.HandlerFunc(handleGetPetByIDFaked),
 	}
 	logBuffer := &bytes.Buffer{}
-	router, err := NewRouter(loadDoc().Spec(), handlers, Use(NewResponseBodyValidator(responseErrorHandler(logBuffer))))
+	errHandler := responseErrorHandler(logBuffer)
+
+	router, err := NewRouter(loadDoc().Spec(), handlers, Use(NewResponseBodyValidator(errHandler)))
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}
@@ -96,7 +98,7 @@ func TestResponseBodyValidator(t *testing.T) {
 
 		expectedStatusCode := http.StatusOK
 		expectedPayload := `{"name":`
-		expectedLogBuffer := ""
+		expectedLogBuffer := "json decode: unexpected end of JSON input"
 
 		if expectedStatusCode != statusCode {
 			t.Errorf("Expected status code to be %v but got %v", expectedStatusCode, statusCode)
@@ -115,7 +117,7 @@ func TestResponseBodyValidator(t *testing.T) {
 	resourceHandler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprint(w, "hit no operation resource")
 	})
-	handler := NewResponseBodyValidator(validationErrorsHandler).Apply(resourceHandler)
+	handler := NewResponseBodyValidator(errHandler).Apply(resourceHandler)
 	noopRouter := chi.NewRouter()
 	noopRouter.Handle("/resource", handler)
 

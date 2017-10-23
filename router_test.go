@@ -9,6 +9,8 @@ import (
 	"reflect"
 	"testing"
 
+	"strings"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -51,19 +53,20 @@ func TestNewRouter(t *testing.T) {
 }
 
 func TestDebugLog(t *testing.T) {
-	lg := &logrus.Logger{Out: ioutil.Discard}
-	w := lg.Writer()
-	opt := DebugLog(w)
+	buf := &bytes.Buffer{}
+	lg := logrus.New()
+	lg.Out = buf
+
+	opt := DebugLog(lg.Infof)
 
 	router := &Router{}
-
 	opt(router)
 
-	if !reflect.DeepEqual(router.debugLog, w) {
-		t.Fatalf("Expected debugLog to be %v but got %v", w, router.debugLog)
-	}
+	router.debugLog("hello %s", "debugLog")
 
-	logf(router.debugLog, "Hello, debugLog!")
+	if !strings.Contains(buf.String(), "hello debugLog") {
+		t.Fatalf("Expected buf to contain hello debugLog")
+	}
 }
 
 func TestBaseRouterOpt(t *testing.T) {

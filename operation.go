@@ -18,7 +18,7 @@ func (oid OperationID) String() string {
 // OperationHandlers maps OperationID to its handler.
 type OperationHandlers map[OperationID]http.Handler
 
-func NewOperationMiddleware(op *spec.Operation) Middleware {
+func newOperationMiddleware(op *spec.Operation) Middleware {
 	return operationMiddleware{op}
 }
 

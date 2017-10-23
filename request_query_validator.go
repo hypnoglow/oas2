@@ -1,6 +1,7 @@
 package oas2
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/hypnoglow/oas2/validate"
@@ -8,16 +9,14 @@ import (
 
 // NewQueryValidator returns new Middleware that validates request query
 // parameters against OpenAPI 2.0 spec.
-func NewQueryValidator(errHandler func(w http.ResponseWriter, errs []error)) Middleware {
+func NewQueryValidator(errHandler RequestErrorHandler) Middleware {
 	return queryValidatorMiddleware{
-		errHandler:      errHandler,
-		continueOnError: false, // TODO: make controllable
+		errHandler: errHandler,
 	}
 }
 
 type queryValidatorMiddleware struct {
-	errHandler      func(w http.ResponseWriter, errs []error)
-	continueOnError bool
+	errHandler RequestErrorHandler
 }
 
 func (m queryValidatorMiddleware) Apply(next http.Handler) http.Handler {
@@ -29,8 +28,8 @@ func (m queryValidatorMiddleware) Apply(next http.Handler) http.Handler {
 		}
 
 		if errs := validate.Query(op.Parameters, req.URL.Query()); len(errs) > 0 {
-			m.errHandler(w, errs)
-			if !m.continueOnError {
+			err := ValidationError{error: fmt.Errorf("validation error"), errs: errs}
+			if !m.errHandler(w, req, err) {
 				return
 			}
 		}

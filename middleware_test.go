@@ -49,29 +49,52 @@ func helperPost(t *testing.T, router http.Handler, url string, body io.Reader) [
 	return respBody
 }
 
-func validationErrorsHandler(w http.ResponseWriter, errs []error) {
-	p := convertErrs(errs)
+func makeErrorHandler() RequestErrorHandler {
+	return func(w http.ResponseWriter, req *http.Request, err error) (resume bool) {
 
-	b, err := json.Marshal(p)
-	if err != nil {
-		panic(err)
-	}
+		switch err.(type) {
+		case ValidationError:
+			e := err.(ValidationError)
+			p := convertErrs(e.Errors())
+			b, err := json.Marshal(p)
+			if err != nil {
+				panic(err)
+			}
 
-	if _, err := w.Write(b); err != nil {
-		panic(err)
+			if _, err := w.Write(b); err != nil {
+				panic(err)
+			}
+			return false // do not continue
+
+		case JsonError:
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`{"errors":[{"message":"Body contains invalid json"}]}`))
+			return false // do not continue
+
+		default:
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return false // do not continue
+		}
 	}
 }
 
-func responseErrorHandler(buffer *bytes.Buffer) func(w http.ResponseWriter, errs []error) {
+func responseErrorHandler(buffer *bytes.Buffer) ResponseErrorHandler {
 	l := log.New(buffer, "", 0)
-	return func(w http.ResponseWriter, errs []error) {
-		for _, e := range convertErrs(errs).Errors {
-			l.Printf(
-				"response data does not match the schema: field=%s value=%v message=%s",
-				e.Field,
-				e.Value,
-				e.Message,
-			)
+
+	return func(w http.ResponseWriter, req *http.Request, err error) {
+		switch err.(type) {
+		case ValidationError:
+			ve := err.(ValidationError)
+			for _, e := range convertErrs(ve.Errors()).Errors {
+				l.Printf(
+					"response data does not match the schema: field=%s value=%v message=%s",
+					e.Field,
+					e.Value,
+					e.Message,
+				)
+			}
+		default:
+			l.Print(err)
 		}
 	}
 }
