@@ -53,6 +53,11 @@ func NewRouter(
 				handler = mwf(handler)
 			}
 
+			// Add all path parameters to operation parameters.
+			for _, pathParam := range sw.Paths.Paths[path].Parameters {
+				op.AddParam(&pathParam)
+			}
+
 			logf(router.debugLog, "oas2: handle %s %s", method, sw.BasePath+path)
 			handler = newOperationMiddleware(op).Apply(handler)
 			base.Route(method, sw.BasePath+path, handler)
