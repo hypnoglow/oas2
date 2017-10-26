@@ -36,6 +36,7 @@ func (m operationMiddleware) Apply(next http.Handler) http.Handler {
 }
 
 // GetOperation returns *spec.Operation from the request's context.
+// In case of operation not found GetOperation returns nil.
 func GetOperation(req *http.Request) *spec.Operation {
 	op, ok := req.Context().Value(contextKeyOperation{}).(*spec.Operation)
 	if ok {
@@ -43,6 +44,17 @@ func GetOperation(req *http.Request) *spec.Operation {
 	}
 
 	return nil
+}
+
+// MustOperation returns *spec.Operation from the request's context.
+// In case of operation not found MustOperation panics.
+func MustOperation(req *http.Request) *spec.Operation {
+	op := GetOperation(req)
+	if op != nil {
+		return op
+	}
+
+	panic("OAS operation not found in request context")
 }
 
 type contextKeyOperation struct{}
