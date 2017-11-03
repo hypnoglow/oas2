@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"testing"
 
+	"net/http/httptest"
+
 	"github.com/go-chi/chi"
 )
 
@@ -25,6 +27,22 @@ func TestBodyValidator(t *testing.T) {
 		expectedPayload := "pet name: johndoe"
 		if !bytes.Equal([]byte(expectedPayload), resp) {
 			t.Fatalf("Expected response body to be\n%s\nbut got\n%s", expectedPayload, string(resp))
+		}
+	})
+
+	t.Run("should skip body validation for not application/json content type", func(t *testing.T) {
+		server := httptest.NewServer(router)
+		client := server.Client()
+		defer server.Close()
+
+		resp, err := client.Post(server.URL+"/v2/pet", "text/plain", bytes.NewBufferString(`some`))
+		if err != nil {
+			t.Fatalf("Unexpected error: %s", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("Expected response status code to be %d but got %d", http.StatusBadRequest, resp.StatusCode)
 		}
 	})
 
