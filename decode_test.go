@@ -45,7 +45,8 @@ func TestDecodeQuery(t *testing.T) {
 			Name           string `oas:"name"`
 			Sex            string `oas:"sex"`
 			fieldWithNoTag string
-			notSettable    string `oas:"not_settable"`
+			notSettable    string  `oas:"not_settable"`
+			NotMandatory   *string `oas:"not_mandatory"`
 		}
 
 		member struct {
@@ -55,6 +56,8 @@ func TestDecodeQuery(t *testing.T) {
 			Height      float32 `oas:"height"`
 		}
 	)
+
+	String := func(s string) *string { return &s }
 
 	number := 1
 
@@ -297,6 +300,27 @@ func TestDecodeQuery(t *testing.T) {
 			expectedError: fmt.Errorf(
 				"field notSettable of type user is not settable",
 			),
+		},
+		{
+			// Pointer field
+			ps: []spec.Parameter{
+				{
+					ParamProps: spec.ParamProps{
+						Name: "not_mandatory",
+						In:   "query",
+					},
+					SimpleSchema: spec.SimpleSchema{
+						Type: "string",
+					},
+				},
+			},
+			q: url.Values{
+				"not_mandatory": []string{"I can be nil"},
+			},
+			dst: &user{},
+			expectedData: &user{
+				NotMandatory: String("I can be nil"),
+			},
 		},
 	}
 
