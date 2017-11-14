@@ -181,10 +181,6 @@ definitions:
         type: "integer"
         format: "int32"
         example: 7
-      tags:
-        type: "array"
-        items:
-          type: "array"
       status:
         type: "string"
         description: "pet status in the store"
