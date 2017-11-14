@@ -69,8 +69,8 @@ func DecodeQuery(ps []spec.Parameter, q url.Values, dst interface{}) error {
 
 func set(v interface{}, f reflect.StructField, dst reflect.Value) error {
 	// Check if tag in struct can accept value of type v.
-	if !f.Type.AssignableTo(reflect.TypeOf(v)) {
-		return fmt.Errorf("field %s is not assignable to %s", f.Name, reflect.TypeOf(v).Name())
+	if !isAssignable(f, v) {
+		return fmt.Errorf("value of type %s is not assignable to field %s of type %s", reflect.TypeOf(v).String(), f.Name, f.Type.String())
 	}
 
 	fieldVal := dst.FieldByName(f.Name)
@@ -78,8 +78,21 @@ func set(v interface{}, f reflect.StructField, dst reflect.Value) error {
 		return fmt.Errorf("field %s of type %s is not settable", f.Name, dst.Type().Name())
 	}
 
-	fieldVal.Set(reflect.ValueOf(v))
+	if f.Type.Kind() == reflect.Ptr {
+		fieldVal.Set(reflect.New(f.Type.Elem()))
+		fieldVal.Elem().Set(reflect.ValueOf(v))
+	} else {
+		fieldVal.Set(reflect.ValueOf(v))
+	}
 	return nil
+}
+
+func isAssignable(field reflect.StructField, value interface{}) bool {
+	if field.Type.Kind() == reflect.Ptr {
+		return reflect.TypeOf(value).AssignableTo(field.Type.Elem())
+	}
+
+	return reflect.TypeOf(value).AssignableTo(field.Type)
 }
 
 // fieldMap returns v fields mapped by their tags.
