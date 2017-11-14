@@ -182,7 +182,7 @@ func TestDecodeQuery(t *testing.T) {
 			expectedData: &user{
 				Name: "John",
 			},
-			expectedError: fmt.Errorf("field Sex is not assignable to int"),
+			expectedError: fmt.Errorf("value of type int is not assignable to field Sex of type string"),
 		},
 		{
 			// Different types of query parameters
