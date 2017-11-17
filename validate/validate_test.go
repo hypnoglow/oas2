@@ -100,8 +100,8 @@ func TestQuery(t *testing.T) {
 			ps: []spec.Parameter{
 				{
 					ParamProps: spec.ParamProps{
-						Name: "age",
-						In: "query",
+						Name:     "age",
+						In:       "query",
 						Required: true,
 					},
 					SimpleSchema: spec.SimpleSchema{

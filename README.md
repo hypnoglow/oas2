@@ -156,6 +156,18 @@ fmt.Printf("%#v", m) // Member{Name:"John", Age:27, LovesApples:true}
 
 See [`godoc example`](https://godoc.org/github.com/hypnoglow/oas2#example-DecodeQuery) for complete example code.
 
+### Pluggable formats & validators
+
+The specification [allows](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#data-types) to have custom formats and to validate against them.
+
+This package provides the following custom formats and validators:
+- [`partial-time`](formats/partial_time.go)
+
+You can also implement your custom format and validator for it, and then register it:
+```go
+validate.RegisterFormat("myformat", &MyCustomFormat{}, ValidateMyCustomFormat)
+```
+
 ## License
 
 [MIT](https://github.com/hypnoglow/oas2/blob/master/LICENSE).

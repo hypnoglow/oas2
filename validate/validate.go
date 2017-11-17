@@ -20,7 +20,6 @@ import (
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/spec"
-	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/validate"
 
 	"github.com/hypnoglow/oas2/convert"
@@ -124,7 +123,7 @@ func validateQueryParam(p spec.Parameter, q url.Values) (errs ValidationErrors) 
 		return append(errs, ValidationErrorf(p.Name, q.Get(p.Name), "param %s: %s", p.Name, err))
 	}
 
-	if result := validate.NewParamValidator(&p, strfmt.Default).Validate(value); result != nil {
+	if result := validate.NewParamValidator(&p, formatRegistry).Validate(value); result != nil {
 		for _, e := range result.Errors {
 			errs = append(errs, ValidationErrorf(p.Name, value, e.Error()))
 		}
@@ -138,7 +137,7 @@ func validateBodyParam(p spec.Parameter, data interface{}) (errs ValidationError
 }
 
 func validatebySchema(sch *spec.Schema, data interface{}) (errs ValidationErrors) {
-	err := validate.AgainstSchema(sch, data, strfmt.Default)
+	err := validate.AgainstSchema(sch, data, formatRegistry)
 	ves, ok := err.(*errors.CompositeError)
 	if ok && len(ves.Errors) > 0 {
 		for _, e := range ves.Errors {
