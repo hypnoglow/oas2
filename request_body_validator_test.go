@@ -5,9 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"testing"
-
 	"net/http/httptest"
+	"testing"
 
 	"github.com/go-chi/chi"
 )
