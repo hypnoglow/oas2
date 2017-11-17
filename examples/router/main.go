@@ -81,7 +81,7 @@ func middlewareErrorHandler(log logrus.FieldLogger) oas.RequestErrorHandler {
 			return false // do not continue
 
 		default:
-			log.Error("oas2 middleware: %s", err)
+			log.Error("oas middleware: %s", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return false
 		}

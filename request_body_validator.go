@@ -28,7 +28,7 @@ func (m bodyValidatorMiddleware) Apply(next http.Handler) http.Handler {
 		// TODO
 		if req.Header.Get("Content-Type") != "application/json" {
 			// Do not validate multipart/form.
-			// There will be built-in validation in oas2 package,
+			// There will be built-in validation in oas package,
 			// but currently it's cumbersome to implement.
 			next.ServeHTTP(w, req)
 			return

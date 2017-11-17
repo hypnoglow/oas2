@@ -32,11 +32,15 @@ Let's dive into a simple example.
 
 Given a spec: [petstore.yaml](examples/petstore.yaml)
 
-First of all, load your spec in your app:
+First of all, load your spec in your app (note that though package import path ends in `oas2`, the package namespace is actually `oas`):
 
 ```go
+import "github.com/hypnoglow/oas2"
+
+// ...
+
 // specPath is a path to your spec file.
-doc, _ := oas2.LoadSpec(specPath)
+doc, _ := oas.LoadSpec(specPath)
 ```
 
 Next, create an [operation](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#operationObject) handler. 
@@ -57,7 +61,7 @@ func loginHandler(w http.ResponseWriter, req *http.Request) {
 ```
 
 ```go
-handlers := oas2.OperationHandlers{
+handlers := oas.OperationHandlers{
     "loginUser":    http.HandlerFunc(loginHandler),
 }
 ```
@@ -67,17 +71,17 @@ Define what options (logger, middleware) you will use:
 ```go
 logger := logrus.New()
 logger.SetLevel(logrus.DebugLevel)
-queryValidator := oas2.NewQueryValidator(errHandler)
+queryValidator := oas.NewQueryValidator(errHandler)
 ```
 
 Create a router:
 
 ```go
-router, _ := oas2.NewRouter(
+router, _ := oas.NewRouter(
     doc.Spec(), 
     handlers, 
-    oas2.DebugLog(logger.Debugf), 
-    oas2.Use(queryValidator)
+    oas.DebugLog(logger.Debugf), 
+    oas.Use(queryValidator)
 )
 ```
 
@@ -130,7 +134,7 @@ And populate it:
 
 ```go
 var m Member 
-oas2.DecodeQuery(paramSpec, req.URL.Query(), &m)
+oas.DecodeQuery(paramSpec, req.URL.Query(), &m)
 
 fmt.Printf("%#v", m) // Member{Name:"John", Age:27, LovesApples:true}
 ```
