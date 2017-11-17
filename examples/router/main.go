@@ -18,12 +18,12 @@ func main() {
 	flag.StringVar(&specPath, "spec", "", "Path to spec.yaml")
 	flag.Parse()
 
-	doc, err := oas2.LoadSpec(specPath)
+	doc, err := oas.LoadSpec(specPath)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	handlers := oas2.OperationHandlers{
+	handlers := oas.OperationHandlers{
 		"addPet":       http.HandlerFunc(postPet),
 		"loginUser":    http.HandlerFunc(getUserLogin),
 		"getInventory": http.HandlerFunc(getStoreInventory),
@@ -39,12 +39,12 @@ func main() {
 	// Prepare error handler.
 	errHandler := middlewareErrorHandler(lg)
 
-	router, err := oas2.NewRouter(
+	router, err := oas.NewRouter(
 		doc.Spec(),
 		handlers,
-		oas2.Base(oas2.ChiAdapter(baseRouter)),
-		oas2.DebugLog(lg.Debugf),
-		oas2.Use(oas2.NewQueryValidator(errHandler)),
+		oas.Base(oas.ChiAdapter(baseRouter)),
+		oas.DebugLog(lg.Debugf),
+		oas.Use(oas.NewQueryValidator(errHandler)),
 	)
 	if err != nil {
 		log.Fatalln(err)
@@ -71,17 +71,17 @@ func getStoreInventory(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func middlewareErrorHandler(log logrus.FieldLogger) oas2.RequestErrorHandler {
+func middlewareErrorHandler(log logrus.FieldLogger) oas.RequestErrorHandler {
 	return func(w http.ResponseWriter, req *http.Request, err error) (resume bool) {
 
 		switch err.(type) {
-		case oas2.ValidationError:
-			e := err.(oas2.ValidationError)
+		case oas.ValidationError:
+			e := err.(oas.ValidationError)
 			respondClientErrors(w, e.Errors())
 			return false // do not continue
 
 		default:
-			log.Error("oas2 middleware: %s", err)
+			log.Error("oas middleware: %s", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return false
 		}

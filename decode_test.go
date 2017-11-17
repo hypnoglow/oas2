@@ -1,4 +1,4 @@
-package oas2
+package oas
 
 import (
 	"fmt"
@@ -36,7 +36,7 @@ func ExampleDecodeQuery() {
 	fmt.Printf("%#v", m)
 
 	// Output:
-	// oas2.member{Name:"John", Age:27, LovesApples:true}
+	// oas.member{Name:"John", Age:27, LovesApples:true}
 }
 
 func TestDecodeQuery(t *testing.T) {

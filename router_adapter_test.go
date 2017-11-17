@@ -1,4 +1,4 @@
-package oas2
+package oas
 
 import (
 	"io"
