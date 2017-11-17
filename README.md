@@ -6,13 +6,14 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/hypnoglow/oas2)](https://goreportcard.com/report/github.com/hypnoglow/oas2)
 [![License MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
 
-**WIP. Not stable. API may change at any time.**
+**WIP. Not stable yet. API may change at any time. Use a vendoring tool of your
+preference to lock an exact [release](https://github.com/hypnoglow/oas2/releases) version.**
 
 Package oas2 provides utilities to work with OpenAPI 2.0 specification
 (aka Swagger).
 
 The purpose of this package is to provide utilities for building APIs
-from the OpenAPI specification in Go idiomatic way on top of `net/http`.
+around the OpenAPI specification in Go idiomatic way on top of `net/http`.
 
 You don't need to learn any special framework or write `net/http`-incompatible
 code - just delegate request validation, request parameters decoding
@@ -22,12 +23,19 @@ and other routines to this library - and focus on your application logic.
 
 ### Router from a spec
 
+This package provides an easy way to automatically create a router supporting
+all resources from your OpenAPI specification file. The underlying router is only
+your choice - you can use [gorilla/mux](https://github.com/gorilla/mux), [chi](https://github.com/go-chi/chi)
+or any other.
+
+Let's dive into a simple example.
+
 Given a spec: [petstore.yaml](examples/petstore.yaml)
 
 First of all, load your spec in your app:
 
 ```go
-// path is a path to your spec file.
+// specPath is a path to your spec file.
 doc, _ := oas2.LoadSpec(specPath)
 ```
 

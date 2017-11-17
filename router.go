@@ -25,16 +25,18 @@ func NewRouter(
 	handlers OperationHandlers,
 	options ...RouterOption,
 ) (Router, error) {
-	// Default options.
-	router := Router{
-		debugLog:   nil,
-		baseRouter: defaultBaseRouter(),
-		mws:        make([]MiddlewareFunc, 0),
-	}
-
 	// Apply argument options.
+	router := Router{}
 	for _, o := range options {
 		o(&router)
+	}
+
+	// Default options
+	if router.debugLog == nil {
+		router.debugLog = func(format string, args ...interface{}) {}
+	}
+	if router.baseRouter == nil {
+		router.baseRouter = defaultBaseRouter()
 	}
 
 	// Router handles all the spec operations.
@@ -43,7 +45,7 @@ func NewRouter(
 		for path, op := range pathOps {
 			handler, ok := handlers[OperationID(op.ID)]
 			if !ok {
-				logf(router.debugLog, "oas2: no handler registered for operation %s", op.ID)
+				router.debugLog("oas2: no handler registered for operation %s", op.ID)
 				continue
 			}
 
@@ -58,7 +60,7 @@ func NewRouter(
 				op.AddParam(&pathParam)
 			}
 
-			logf(router.debugLog, "oas2: handle %s %s", method, sw.BasePath+path)
+			router.debugLog("oas2: handle %s %s", method, sw.BasePath+path)
 			handler = newOperationMiddleware(op).Apply(handler)
 			base.Route(method, sw.BasePath+path, handler)
 		}
@@ -110,11 +112,4 @@ func UseFunc(mw MiddlewareFunc) RouterOption {
 	return func(args *Router) {
 		args.mws = append(args.mws, mw)
 	}
-}
-
-func logf(w LogWriter, format string, args ...interface{}) {
-	if w == nil {
-		return
-	}
-	w(format, args...)
 }

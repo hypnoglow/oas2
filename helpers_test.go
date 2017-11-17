@@ -96,12 +96,6 @@ paths:
       produces:
       - "application/json"
       parameters:
-      - name: "petId"
-        in: "path"
-        description: "ID of pet to return"
-        required: true
-        type: "integer"
-        format: "int64"
       - in: query
         name: debug
         type: boolean
@@ -116,6 +110,13 @@ paths:
           description: "Pet not found"
       security:
       - api_key: []
+    parameters:
+      - name: "petId"
+        in: "path"
+        description: "ID of pet to return"
+        required: true
+        type: "integer"
+        format: "int64"
   /user/login:
     get:
       tags:

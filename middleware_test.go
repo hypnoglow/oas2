@@ -3,6 +3,8 @@ package oas2
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -10,6 +12,19 @@ import (
 	"net/http/httptest"
 	"testing"
 )
+
+func TestValidationError_Error(t *testing.T) {
+	ve := ValidationError{
+		error: errors.New("got validation errors"),
+		errs:  []error{fmt.Errorf("field is invalid")},
+	}
+
+	s := ve.Error()
+	expectedString := "got validation errors: - field is invalid"
+	if s != expectedString {
+		t.Errorf("Expected %q but got %q", expectedString, s)
+	}
+}
 
 func helperGet(t *testing.T, router http.Handler, url string) ([]byte, int) {
 	server := httptest.NewServer(router)

@@ -56,6 +56,7 @@ func stringArray(vals []string) (value interface{}, err error) {
 	for i, v := range vals {
 		p, err := Primitive(v, typeString, "")
 		if err != nil {
+			// This should actually never happen.
 			return nil, err
 		}
 		ps[i] = p.(string)

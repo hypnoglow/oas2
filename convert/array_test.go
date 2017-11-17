@@ -48,6 +48,14 @@ func TestArray(t *testing.T) {
 		assertConversionError(t, false, err)
 	})
 
+	t.Run("ok for int array with any other format", func(t *testing.T) {
+		values := []string{"123", "456"}
+
+		v, err := Array(values, "integer", "years")
+		assertConversionResult(t, []int64{123, 456}, v)
+		assertConversionError(t, false, err)
+	})
+
 	t.Run("ok for float array", func(t *testing.T) {
 		values := []string{"123.456", "456.123", "100"}
 
@@ -60,6 +68,14 @@ func TestArray(t *testing.T) {
 		values := []string{"123.456", "456.123", "100"}
 
 		v, err := Array(values, "number", "double")
+		assertConversionResult(t, []float64{123.456, 456.123, 100.0}, v)
+		assertConversionError(t, false, err)
+	})
+
+	t.Run("ok for float array of any other format", func(t *testing.T) {
+		values := []string{"123.456", "456.123", "100"}
+
+		v, err := Array(values, "number", "unknown-format")
 		assertConversionResult(t, []float64{123.456, 456.123, 100.0}, v)
 		assertConversionError(t, false, err)
 	})
@@ -83,7 +99,7 @@ func TestArray(t *testing.T) {
 	t.Run("fail on mixed types in float array", func(t *testing.T) {
 		values := []string{"123.456", "Max"}
 
-		v, err := Array(values, "integer", "float")
+		v, err := Array(values, "number", "float")
 		assertConversionResult(t, nil, v)
 		assertConversionError(t, true, err)
 	})
@@ -91,17 +107,9 @@ func TestArray(t *testing.T) {
 	t.Run("fail on mixed types in double array", func(t *testing.T) {
 		values := []string{"123.456", "Max"}
 
-		v, err := Array(values, "integer", "double")
+		v, err := Array(values, "number", "double")
 		assertConversionResult(t, nil, v)
 		assertConversionError(t, true, err)
-	})
-
-	t.Run("ok for int array with any other format", func(t *testing.T) {
-		values := []string{"123", "456"}
-
-		v, err := Array(values, "integer", "years")
-		assertConversionResult(t, []int64{123, 456}, v)
-		assertConversionError(t, false, err)
 	})
 
 	t.Run("fail on unsupported type", func(t *testing.T) {
