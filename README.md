@@ -9,15 +9,29 @@
 **WIP. Not stable yet. API may change at any time. Use a vendoring tool of your
 preference to lock an exact [release](https://github.com/hypnoglow/oas2/releases) version.**
 
-Package oas2 provides utilities to work with OpenAPI 2.0 specification
-(aka Swagger).
-
-The purpose of this package is to provide utilities for building APIs
-around the OpenAPI specification in Go idiomatic way on top of `net/http`.
+Package oas2 provides utilities for building APIs using the OpenAPI 2.0 
+specification (aka Swagger) in Go idiomatic way on top of `net/http`.
 
 You don't need to learn any special framework or write `net/http`-incompatible
 code - just delegate request validation, request parameters decoding
 and other routines to this library - and focus on your application logic.
+
+This package is built on top of [OpenAPI Initiative golang toolkit](https://github.com/go-openapi).
+
+### Should I have an OpenAPI specification for my API?
+
+If you don't have a spec for your API yet - it's definitely worth it to create 
+one. The specification itself provides many useful things, such as documentation,
+usage examples, and others. [Learn more](https://www.openapis.org/) about OpenAPI
+and its purposes. The great thing is that it is compatible with many tools for 
+developers and consumers; [Swagger Toolkit](https://swagger.io/) is the most popular
+set of utilities for OpenAPI.
+
+This package offers an integration of the spec with your code. And tightly 
+coupling your code with the spec is a good thing - you create a strong contract
+for API consumers, and any changes to your API will be clearly reflected in the 
+spec. You will see many benefits, such as distinctly recognize the situation when
+you need to increase the major version of your API because of incompatible changes.
 
 ## Features
 
