@@ -4,6 +4,7 @@
 [![CircleCI](https://circleci.com/gh/hypnoglow/oas2.svg?style=shield)](https://circleci.com/gh/hypnoglow/oas2)
 [![codecov](https://codecov.io/gh/hypnoglow/oas2/branch/master/graph/badge.svg)](https://codecov.io/gh/hypnoglow/oas2)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hypnoglow/oas2)](https://goreportcard.com/report/github.com/hypnoglow/oas2)
+[![GitHub release](https://img.shields.io/github/tag/hypnoglow/oas2.svg)](https://github.com/hypnoglow/oas2/releases)
 [![License MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
 
 **WIP. Not stable yet. API may change at any time. Use a vendoring tool of your
