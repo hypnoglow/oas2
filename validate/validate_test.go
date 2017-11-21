@@ -100,8 +100,8 @@ func TestQuery(t *testing.T) {
 			ps: []spec.Parameter{
 				{
 					ParamProps: spec.ParamProps{
-						Name: "age",
-						In: "query",
+						Name:     "age",
+						In:       "query",
 						Required: true,
 					},
 					SimpleSchema: spec.SimpleSchema{
@@ -232,22 +232,6 @@ func TestBySchema(t *testing.T) {
 		if !reflect.DeepEqual(c.expectedErrors, errs) {
 			t.Errorf("Expected errors to be %#v but got %#v", c.expectedErrors, errs)
 		}
-	}
-}
-
-func TestValidationError(t *testing.T) {
-	ve := ValidationErrorf("name", nil, "name cannot be empty")
-
-	if ve.Error() != "name cannot be empty" {
-		t.Errorf("Unexpected error message")
-	}
-
-	if ve.Field() != "name" {
-		t.Errorf("Unexpected error field")
-	}
-
-	if ve.Value() != nil {
-		t.Errorf("Unexpected error value")
 	}
 }
 

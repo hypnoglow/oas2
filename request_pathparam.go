@@ -48,7 +48,7 @@ func GetPathParam(req *http.Request, name string) interface{} {
 }
 
 // WithPathParam returns request with context value defining path parameter name
-// set to value.
+// setFieldValue to value.
 func WithPathParam(req *http.Request, name string, value interface{}) *http.Request {
 	return req.WithContext(context.WithValue(req.Context(), contextKeyPathParam(name), value))
 }
