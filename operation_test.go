@@ -27,7 +27,7 @@ func TestMustOperation(t *testing.T) {
 		}
 
 		op := &spec.Operation{OperationProps: spec.OperationProps{Description: "some"}}
-		req = withOperation(req, op)
+		req = WithOperation(req, op)
 
 		actualOperation := MustOperation(req)
 		if !reflect.DeepEqual(actualOperation, op) {

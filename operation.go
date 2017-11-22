@@ -28,12 +28,13 @@ type operationMiddleware struct {
 
 func (m operationMiddleware) Apply(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		req = withOperation(req, m.operation)
+		req = WithOperation(req, m.operation)
 		next.ServeHTTP(w, req)
 	})
 }
 
-func withOperation(req *http.Request, op *spec.Operation) *http.Request {
+// WithOperation returns request with context value defining *spec.Operation.
+func WithOperation(req *http.Request, op *spec.Operation) *http.Request {
 	return req.WithContext(
 		context.WithValue(req.Context(), contextKeyOperation{}, op),
 	)
