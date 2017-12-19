@@ -31,6 +31,11 @@ func (m responseBodyValidator) Apply(next http.Handler) http.Handler {
 
 		next.ServeHTTP(rr, req)
 
+		// Only json body can be validated currently.
+		if w.Header().Get("Content-Type") != "application/json" {
+			return
+		}
+
 		responseSpec, ok := op.Responses.StatusCodeResponses[rr.Status()]
 		if !ok {
 			// TODO: should notify package user that there is no response spec.
