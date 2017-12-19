@@ -145,6 +145,7 @@ func handleGetPetByIDFaked(w http.ResponseWriter, req *http.Request) {
 
 	// fake for bad json
 	if req.URL.Path == "/v2/pet/badjson" {
+		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"name":`))
 		return
 	}
@@ -158,6 +159,7 @@ func handleGetPetByIDFaked(w http.ResponseWriter, req *http.Request) {
 
 	p := pet{123, "Kitty"}
 
+	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(p); err != nil {
 		panic(err)
 	}

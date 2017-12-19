@@ -21,14 +21,6 @@ type responseBodyValidator struct {
 
 func (m responseBodyValidator) Apply(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if w.Header().Get("Content-Type") != "application/json" {
-			// Do not validate multipart/form.
-			// There will be built-in validation in oas package,
-			// but currently it's cumbersome to implement.
-			next.ServeHTTP(w, req)
-			return
-		}
-
 		op := GetOperation(req)
 		if op == nil {
 			next.ServeHTTP(w, req)
@@ -38,6 +30,11 @@ func (m responseBodyValidator) Apply(next http.Handler) http.Handler {
 		rr := utils.NewResponseRecorder(w)
 
 		next.ServeHTTP(rr, req)
+
+		// Only json body can be validated currently.
+		if w.Header().Get("Content-Type") != "application/json" {
+			return
+		}
 
 		responseSpec, ok := op.Responses.StatusCodeResponses[rr.Status()]
 		if !ok {
