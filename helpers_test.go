@@ -4,7 +4,6 @@ import (
 	"log"
 
 	"github.com/go-openapi/loads"
-	"github.com/go-openapi/spec"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
@@ -13,24 +12,25 @@ import (
 func loadDoc() *loads.Document {
 	yml, err := swag.BytesToYAMLDoc(sp)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("failed to convert spec to yaml: %v", err)
 	}
 	jsn, err := swag.YAMLToJSON(yml)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("failed to convert yaml to json: %v", err)
 	}
 
 	doc, err := loads.Analyzed(jsn, "2.0")
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("failed to analyze spec: %v", err)
 	}
 
-	if err := spec.ExpandSpec(doc.Spec(), &spec.ExpandOptions{}); err != nil {
-		log.Fatalln(err)
+	doc, err = doc.Expanded()
+	if err != nil {
+		log.Fatalf("failed to expand spec: %v", err)
 	}
 
 	if err := validate.Spec(doc, strfmt.Default); err != nil {
-		log.Fatalln(err)
+		log.Fatalf("failed to validate spec: %v", err)
 	}
 
 	return doc

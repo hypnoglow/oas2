@@ -25,7 +25,7 @@ func TestNewRouter(t *testing.T) {
 	// router with default base router
 	r, err := NewRouter(doc.Spec(), handlers)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("failed to create router: %v", err)
 	}
 
 	server := httptest.NewServer(r)
@@ -34,12 +34,12 @@ func TestNewRouter(t *testing.T) {
 	body := bytes.NewBufferString(`{"name": "Rex"}`)
 	resp, err := client.Post(server.URL+"/v2/pet", "application/json", body)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("HTTP POST request failed: %v", err)
 	}
 
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("failed to read body: %v", err)
 	}
 
 	if !bytes.Equal([]byte("Hello, addPet!"), respBody) {
