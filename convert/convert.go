@@ -73,6 +73,9 @@ func convertString(val, format string) (interface{}, error) {
 	switch format {
 	case "":
 		return val, nil
+	case "partial-time":
+		// For now, return as-is.
+		return val, nil
 	default:
 		// TODO: parse formats byte, binary, date, date-time
 		return nil, fmt.Errorf(
