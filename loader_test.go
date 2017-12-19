@@ -30,7 +30,7 @@ func TestLoadSpec(t *testing.T) {
 	})
 
 	t.Run("should fail on spec expansion", func(t *testing.T) {
-		fpath := "/tmp/spec.json"
+		fpath := "/tmp/spec-that-fails-expansion.json"
 		if err := ioutil.WriteFile(fpath, []byte(specThatFailsToExpand), 0755); err != nil {
 			t.Fatalf("Unexpected error: %s", err)
 		}
@@ -44,7 +44,7 @@ func TestLoadSpec(t *testing.T) {
 	})
 
 	t.Run("should fail on spec validation", func(t *testing.T) {
-		fpath := "/tmp/spec.json"
+		fpath := "/tmp/spec-that-fails-validation.json"
 		if err := ioutil.WriteFile(fpath, []byte(specThatFailsValidation), 0755); err != nil {
 			t.Fatalf("Unexpected error: %s", err)
 		}

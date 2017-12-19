@@ -14,7 +14,7 @@ func TestChiRouter_Route(t *testing.T) {
 
 	hf := func(w http.ResponseWriter, req *http.Request) {
 		if _, err := io.WriteString(w, "handler func"); err != nil {
-			log.Fatal(err)
+			log.Fatalf("failed to write string to response: %v", err)
 		}
 	}
 
