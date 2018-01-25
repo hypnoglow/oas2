@@ -44,7 +44,7 @@ func main() {
 		handlers,
 		oas.Base(oas.ChiAdapter(baseRouter)),
 		oas.DebugLog(lg.Debugf),
-		oas.Use(oas.NewQueryValidator(errHandler)),
+		oas.Use(oas.QueryValidator(errHandler)),
 	)
 	if err != nil {
 		log.Fatalln(err)

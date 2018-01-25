@@ -7,17 +7,17 @@ import (
 	"github.com/hypnoglow/oas2/convert"
 )
 
-// NewPathParameterExtractor returns new Middleware that extracts parameters
+// PathParameterExtractor returns new Middleware that extracts parameters
 // defined in OpenAPI 2.0 spec as path parameters from path.
-func NewPathParameterExtractor(extractor func(r *http.Request, key string) string) Middleware {
-	return pathParameterExtractor{extractor}
+func PathParameterExtractor(extractor func(r *http.Request, key string) string) Middleware {
+	return pathParameterExtractor{extractor}.chain
 }
 
 type pathParameterExtractor struct {
 	extractor func(r *http.Request, key string) string
 }
 
-func (m pathParameterExtractor) Apply(next http.Handler) http.Handler {
+func (m pathParameterExtractor) chain(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		op := GetOperation(req)
 		if op == nil {

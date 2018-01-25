@@ -9,17 +9,17 @@ import (
 	"github.com/hypnoglow/oas2/validate"
 )
 
-// NewResponseBodyValidator returns new Middleware that validates response body
+// ResponseBodyValidator returns new Middleware that validates response body
 // against schema defined in OpenAPI 2.0 spec.
-func NewResponseBodyValidator(errHandler ResponseErrorHandler) Middleware {
-	return responseBodyValidator{errHandler}
+func ResponseBodyValidator(errHandler ResponseErrorHandler) Middleware {
+	return responseBodyValidator{errHandler}.chain
 }
 
 type responseBodyValidator struct {
 	errHandler ResponseErrorHandler
 }
 
-func (m responseBodyValidator) Apply(next http.Handler) http.Handler {
+func (m responseBodyValidator) chain(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		op := GetOperation(req)
 		if op == nil {

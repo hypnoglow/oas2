@@ -83,22 +83,11 @@ func TestBaseRouterOpt(t *testing.T) {
 
 func TestUse(t *testing.T) {
 	r := &Router{}
-	mw := NewQueryValidator(nil)
+	mw := QueryValidator(nil)
 	opt := Use(mw)
 	opt(r)
 
 	if len(r.mws) == 0 {
 		t.Errorf("Expected to apply middleware")
-	}
-}
-
-func TestUseFunc(t *testing.T) {
-	r := &Router{}
-	mwFunc := NewQueryValidator(nil).Apply
-	opt := UseFunc(mwFunc)
-	opt(r)
-
-	if len(r.mws) == 0 {
-		t.Errorf("Expected to apply middleware func")
 	}
 }

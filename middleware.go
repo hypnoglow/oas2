@@ -6,13 +6,8 @@ import (
 	"strings"
 )
 
-// MiddlewareFunc describes middleware function.
-type MiddlewareFunc func(next http.Handler) http.Handler
-
 // Middleware describes a middleware that can be applied to a http.handler.
-type Middleware interface {
-	Apply(next http.Handler) http.Handler
-}
+type Middleware func(next http.Handler) http.Handler
 
 // RequestErrorHandler is a function that handles an error occurred in
 // middleware while working with request. It is the library user responsibility

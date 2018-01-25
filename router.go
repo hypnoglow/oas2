@@ -11,7 +11,7 @@ import (
 type Router struct {
 	debugLog   LogWriter
 	baseRouter BaseRouter
-	mws        []MiddlewareFunc
+	mws        []Middleware
 }
 
 // ServeHTTP implements http.Handler.
@@ -61,7 +61,7 @@ func NewRouter(
 			}
 
 			router.debugLog("oas: handle %s %s", method, sw.BasePath+path)
-			handler = newOperationMiddleware(op).Apply(handler)
+			handler = newOperationMiddleware(op)(handler)
 			base.Route(method, sw.BasePath+path, handler)
 		}
 	}
@@ -102,13 +102,6 @@ func Base(br BaseRouter) RouterOption {
 
 // Use returns an option that sets a middleware for router operations.
 func Use(mw Middleware) RouterOption {
-	return func(args *Router) {
-		args.mws = append(args.mws, mw.Apply)
-	}
-}
-
-// UseFunc returns an option that sets a middleware for router operations.
-func UseFunc(mw MiddlewareFunc) RouterOption {
 	return func(args *Router) {
 		args.mws = append(args.mws, mw)
 	}
