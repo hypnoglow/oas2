@@ -18,7 +18,7 @@ func TestResponseBodyValidator(t *testing.T) {
 	logBuffer := &bytes.Buffer{}
 	errHandler := responseErrorHandler(logBuffer)
 
-	router, err := NewRouter(loadDoc().Spec(), handlers, Use(NewResponseBodyValidator(errHandler)))
+	router, err := NewRouter(loadDoc().Spec(), handlers, Use(ResponseBodyValidator(errHandler)))
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}
@@ -117,7 +117,7 @@ func TestResponseBodyValidator(t *testing.T) {
 	resourceHandler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprint(w, "hit no operation resource")
 	})
-	handler := NewResponseBodyValidator(errHandler).Apply(resourceHandler)
+	handler := ResponseBodyValidator(errHandler)(resourceHandler)
 	noopRouter := chi.NewRouter()
 	noopRouter.Handle("/resource", handler)
 

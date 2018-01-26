@@ -19,14 +19,14 @@ func (oid OperationID) String() string {
 type OperationHandlers map[OperationID]http.Handler
 
 func newOperationMiddleware(op *spec.Operation) Middleware {
-	return operationMiddleware{op}
+	return operationMiddleware{op}.chain
 }
 
 type operationMiddleware struct {
 	operation *spec.Operation
 }
 
-func (m operationMiddleware) Apply(next http.Handler) http.Handler {
+func (m operationMiddleware) chain(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		req = WithOperation(req, m.operation)
 		next.ServeHTTP(w, req)

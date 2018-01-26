@@ -13,7 +13,7 @@ func TestPathParameterExtractor(t *testing.T) {
 	handlers := OperationHandlers{
 		"getPetById": http.HandlerFunc(handleGetPetByID),
 	}
-	router, err := NewRouter(loadDoc().Spec(), handlers, Use(NewPathParameterExtractor(chi.URLParam)))
+	router, err := NewRouter(loadDoc().Spec(), handlers, Use(PathParameterExtractor(chi.URLParam)))
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}
@@ -29,7 +29,7 @@ func TestPathParameterExtractor(t *testing.T) {
 	resourceHandler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprint(w, "hit no operation resource")
 	})
-	handler := NewPathParameterExtractor(chi.URLParam).Apply(resourceHandler)
+	handler := PathParameterExtractor(chi.URLParam)(resourceHandler)
 	noopRouter := chi.NewRouter()
 	noopRouter.Handle("/resource", handler)
 
