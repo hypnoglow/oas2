@@ -73,7 +73,7 @@ func convertString(val, format string) (interface{}, error) {
 	switch format {
 	case "":
 		return val, nil
-	case "partial-time":
+	case "partial-time", "uuid":
 		// For now, return as-is.
 		return val, nil
 	default:
