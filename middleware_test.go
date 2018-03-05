@@ -71,17 +71,18 @@ func makeErrorHandler() RequestErrorHandler {
 		case ValidationError:
 			e := err.(ValidationError)
 			p := convertErrs(e.Errors())
-			b, err := json.Marshal(p)
+			var b []byte
+			b, err = json.Marshal(p)
 			if err != nil {
 				panic(err)
 			}
 
-			if _, err := w.Write(b); err != nil {
+			if _, err = w.Write(b); err != nil {
 				panic(err)
 			}
 			return false // do not continue
 
-		case JsonError:
+		case JSONError:
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(`{"errors":[{"message":"Body contains invalid json"}]}`))
 			return false // do not continue

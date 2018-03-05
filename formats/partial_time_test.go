@@ -78,14 +78,14 @@ func TestPartialTime_UnmarshalText(t *testing.T) {
 func TestIsPartialTime(t *testing.T) {
 	t.Run("should be partial time", func(t *testing.T) {
 		isPartial := IsPartialTime("14:15:30")
-		if isPartial == false {
+		if !isPartial {
 			t.Errorf("Expected true but got %v", isPartial)
 		}
 	})
 
 	t.Run("should not be partial time", func(t *testing.T) {
 		isPartial := IsPartialTime("1234567890")
-		if isPartial == true {
+		if isPartial {
 			t.Errorf("Expected false but got %v", isPartial)
 		}
 	})

@@ -1,0 +1,11 @@
+{
+  "disable": [
+    "gocyclo"
+  ],
+  "exclude": [
+    "error return value not checked.*defer\\s.*\\.Close()"
+  ],
+  "concurrency": 2,
+  "deadline": "60s",
+  "vendor": true
+}
