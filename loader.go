@@ -73,7 +73,7 @@ func LoadSpec(fpath string, opts ...*LoadSpecOption) (document *loads.Document, 
 		return nil, errors.Wrap(err, "Failed to expand spec")
 	}
 
-	if err := validate.Spec(document, strfmt.Default); err != nil {
+	if err = validate.Spec(document, strfmt.Default); err != nil {
 		return nil, errors.Wrap(err, "Spec is invalid")
 	}
 
@@ -83,7 +83,7 @@ func LoadSpec(fpath string, opts ...*LoadSpecOption) (document *loads.Document, 
 
 	// Cache expanded spec.
 
-	if err := os.MkdirAll(filepath.Dir(cacheFilename), 0700); err != nil {
+	if err = os.MkdirAll(filepath.Dir(cacheFilename), 0700); err != nil {
 		return document, errors.Wrap(err, "create cache dir")
 	}
 
@@ -93,7 +93,7 @@ func LoadSpec(fpath string, opts ...*LoadSpecOption) (document *loads.Document, 
 	}
 	defer f.Close()
 
-	if err := json.NewEncoder(f).Encode(document.Spec()); err != nil {
+	if err = json.NewEncoder(f).Encode(document.Spec()); err != nil {
 		return document, errors.Wrap(err, "write cache file")
 	}
 

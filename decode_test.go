@@ -41,10 +41,11 @@ func ExampleDecodeQuery() {
 
 func TestDecodeQuery(t *testing.T) {
 	type (
+		// nolint: megacheck
 		user struct {
 			Name           string `oas:"name"`
 			Sex            string `oas:"sex"`
-			fieldWithNoTag string
+			FieldWithNoTag string
 			notSettable    string  `oas:"not_settable"`
 			NotMandatory   *string `oas:"not_mandatory"`
 		}

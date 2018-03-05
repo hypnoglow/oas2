@@ -24,9 +24,9 @@ type RequestErrorHandler func(w http.ResponseWriter, req *http.Request, err erro
 // This errors can include response validation errors, ...TODO... and other.
 type ResponseErrorHandler func(w http.ResponseWriter, req *http.Request, err error)
 
-// JsonError occurs on json encoding or decoding.
+// JSONError occurs on json encoding or decoding.
 // It can happen both in request and response validation.
-type JsonError struct {
+type JSONError struct {
 	error
 }
 

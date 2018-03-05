@@ -10,7 +10,7 @@ import (
 	"github.com/go-openapi/spec"
 )
 
-func ExampleID_String() {
+func ExampleOperationID_String() {
 	opID := OperationID("addPet")
 
 	fmt.Fprint(os.Stdout, opID.String())

@@ -2,14 +2,74 @@
 #
 # Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2
+
 jobs:
-  build:
+  "prepare-code":
     docker:
       - image: circleci/golang:1.9
     working_directory: /go/src/github.com/hypnoglow/oas2
     steps:
       - checkout
-      - run: go get -v -t -d ./...
-      - run: ./.circleci/testcover.sh
+      - run: GOPATH=$(pwd) go get -v -t -d ./...
+      - run: rm -rf ./src/github.com/hypnoglow/oas2
+      - run: mv src vendor
+      - run: ls -la
+      - persist_to_workspace:
+          root: /go/src/github.com/hypnoglow
+          paths:
+            - oas2
+  "test:1.9":
+    docker:
+      - image: circleci/golang:1.9
+    working_directory: /go/src/github.com/hypnoglow/oas2
+    steps:
+      - attach_workspace:
+          at: /go/src/github.com/hypnoglow
       - run: go build ./...
+      - run: go test -v ./...
+  "test:1.10":
+    docker:
+      - image: circleci/golang:1.10
+    working_directory: /go/src/github.com/hypnoglow/oas2
+    steps:
+      - attach_workspace:
+          at: /go/src/github.com/hypnoglow
+      - run: go build ./...
+      - run: go test -v ./...
+  "lint":
+    docker:
+      - image: circleci/golang:1.9
+    working_directory: /go/src/github.com/hypnoglow/oas2
+    steps:
+      - attach_workspace:
+          at: /go/src/github.com/hypnoglow
+#      - run: apk add --no-cache git gcc musl-dev # required for metalinter, see github.com/alecthomas/gometalinter/issues/149
+      - run: go get -v -u github.com/alecthomas/gometalinter
+      - run: gometalinter --install --update
+      - run: gometalinter ./...
+  "codecov":
+    docker:
+      - image: circleci/golang:1.9
+    working_directory: /go/src/github.com/hypnoglow/oas2
+    steps:
+      - attach_workspace:
+          at: /go/src/github.com/hypnoglow
+      - run: ./.circleci/testcover.sh
       - run: bash <(curl -s https://codecov.io/bash)
+workflows:
+  version: 2
+  prepare-and-test:
+    jobs:
+      - prepare-code
+      - "test:1.9":
+          requires:
+            - prepare-code
+      - "test:1.10":
+          requires:
+            - prepare-code
+      - "lint":
+          requires:
+            - prepare-code
+      - "codecov":
+          requires:
+            - prepare-code

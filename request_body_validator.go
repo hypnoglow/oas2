@@ -52,7 +52,7 @@ func (m bodyValidatorMiddleware) chain(next http.Handler) http.Handler {
 
 		var body interface{}
 		if err := json.NewDecoder(tr).Decode(&body); err != nil {
-			err = JsonError{error: fmt.Errorf("json decode: %s", err)}
+			err = JSONError{error: fmt.Errorf("json decode: %s", err)}
 			if !m.errHandler(w, req, err) {
 				return
 			}
