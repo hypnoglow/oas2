@@ -1,11 +1,13 @@
 package oas
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
-	"github.com/hypnoglow/oas2/utils"
+	chimw "github.com/go-chi/chi/middleware"
+
 	"github.com/hypnoglow/oas2/validate"
 )
 
@@ -27,7 +29,9 @@ func (m responseBodyValidator) chain(next http.Handler) http.Handler {
 			return
 		}
 
-		rr := utils.NewResponseRecorder(w)
+		responseBodyBuffer := &bytes.Buffer{}
+		rr := chimw.NewWrapResponseWriter(w, 1)
+		rr.Tee(responseBodyBuffer)
 
 		next.ServeHTTP(rr, req)
 
@@ -48,7 +52,7 @@ func (m responseBodyValidator) chain(next http.Handler) http.Handler {
 		}
 
 		var body interface{}
-		if err := json.Unmarshal(rr.Payload(), &body); err != nil {
+		if err := json.NewDecoder(responseBodyBuffer).Decode(&body); err != nil {
 			err = JsonError{error: fmt.Errorf("json decode: %s", err)}
 			m.errHandler(w, req, err)
 			return
