@@ -98,7 +98,7 @@ func TestResponseBodyValidator(t *testing.T) {
 
 		expectedStatusCode := http.StatusOK
 		expectedPayload := `{"name":`
-		expectedLogBuffer := "json decode: unexpected end of JSON input"
+		expectedLogBuffer := "json decode: unexpected EOF"
 
 		if expectedStatusCode != statusCode {
 			t.Errorf("Expected status code to be %v but got %v", expectedStatusCode, statusCode)
