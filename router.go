@@ -12,6 +12,9 @@ type Router struct {
 	debugLog   LogWriter
 	baseRouter BaseRouter
 	mws        []Middleware
+
+	// serveSpec, if nonzero, makes router serve its spec.
+	serveSpec SpecHandlerType
 }
 
 // ServeHTTP implements http.Handler.
@@ -41,6 +44,20 @@ func NewRouter(
 
 	// Router handles all the spec operations.
 	base := router.baseRouter
+
+	// Serve the specification itself if enabled.
+	if router.serveSpec != 0 {
+		sw.Paths.Paths[getSpecificationOperationPath] = getSpecificationOperation()
+		var specHandler http.Handler
+		switch router.serveSpec {
+		case SpecHandlerTypeDynamic:
+			specHandler = DynamicSpecHandler(sw)
+		case SpecHandlerTypeStatic:
+			specHandler = StaticSpecHandler(sw)
+		}
+		base.Route(http.MethodGet, sw.BasePath+getSpecificationOperationPath, specHandler)
+	}
+
 	for method, pathOps := range analysis.New(sw).Operations() {
 		for path, op := range pathOps {
 			handler, ok := handlers[OperationID(op.ID)]
@@ -104,5 +121,12 @@ func Base(br BaseRouter) RouterOption {
 func Use(mw Middleware) RouterOption {
 	return func(args *Router) {
 		args.mws = append(args.mws, mw)
+	}
+}
+
+// ServeSpec returns an option that makes router serve its spec.
+func ServeSpec(t SpecHandlerType) RouterOption {
+	return func(r *Router) {
+		r.serveSpec = t
 	}
 }

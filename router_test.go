@@ -14,7 +14,7 @@ import (
 )
 
 func TestNewRouter(t *testing.T) {
-	doc := loadDoc()
+	doc := loadDoc(petstore)
 
 	handlers := OperationHandlers{
 		"addPet": http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

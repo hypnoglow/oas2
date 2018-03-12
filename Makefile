@@ -6,10 +6,10 @@ install:
 test:
 	go test -cover ./...
 
-.PHONY: race
-race:
+.PHONY: test-race
+test-race:
 	go test -race -cover ./...
 
 .PHONY: lint
 lint: install
-	@gometalinter --concurrency=1 --deadline=60s --vendor ./...
+	@gometalinter ./...

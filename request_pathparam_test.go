@@ -13,7 +13,7 @@ func TestPathParameterExtractor(t *testing.T) {
 	handlers := OperationHandlers{
 		"getPetById": http.HandlerFunc(handleGetPetByID),
 	}
-	router, err := NewRouter(loadDoc().Spec(), handlers, Use(PathParameterExtractor(chi.URLParam)))
+	router, err := NewRouter(loadDoc(petstore).Spec(), handlers, Use(PathParameterExtractor(chi.URLParam)))
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}
