@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
 
@@ -89,5 +90,33 @@ func TestUse(t *testing.T) {
 
 	if len(r.mws) == 0 {
 		t.Errorf("Expected to apply middleware")
+	}
+}
+
+func TestServeSpec(t *testing.T) {
+	r, err := NewRouter(
+		loadDoc(petstore).Spec(),
+		OperationHandlers{},
+		ServeSpec(SpecHandlerTypeStatic),
+	)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/v2/openapi.yaml", nil)
+	r.ServeHTTP(w, req)
+
+	spec := loadDoc(w.Body.Bytes()).Spec()
+
+	var paths []string
+	for name := range spec.Paths.Paths {
+		paths = append(paths, name)
+	}
+	sort.Strings(paths)
+
+	expectedPaths := []string{"/openapi.yaml", "/pet", "/pet/{petId}", "/user/login"}
+	if !reflect.DeepEqual(expectedPaths, paths) {
+		t.Errorf("Expected output spec paths to be %v but got %v", expectedPaths, paths)
 	}
 }
