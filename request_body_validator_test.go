@@ -16,7 +16,14 @@ func TestBodyValidator(t *testing.T) {
 		"addPet": http.HandlerFunc(handleAddPet),
 	}
 	errHandler := makeErrorHandler()
-	router, err := NewRouter(loadDoc(petstore).Spec(), handlers, Use(BodyValidator(errHandler)))
+
+	bv := BodyValidator(errHandler, ContentTypeRegexSelector(contentTypeSelectorRegexJSON))
+
+	router, err := NewRouter(
+		loadDoc(petstore).Spec(),
+		handlers,
+		Use(bv),
+	)
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}

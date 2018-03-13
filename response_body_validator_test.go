@@ -18,7 +18,13 @@ func TestResponseBodyValidator(t *testing.T) {
 	logBuffer := &bytes.Buffer{}
 	errHandler := responseErrorHandler(logBuffer)
 
-	router, err := NewRouter(loadDoc(petstore).Spec(), handlers, Use(ResponseBodyValidator(errHandler)))
+	rbv := ResponseBodyValidator(errHandler, ContentTypeRegexSelector(contentTypeSelectorRegexJSON))
+
+	router, err := NewRouter(
+		loadDoc(petstore).Spec(),
+		handlers,
+		Use(rbv),
+	)
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}
@@ -52,7 +58,7 @@ func TestResponseBodyValidator(t *testing.T) {
 		respBody := strings.TrimSpace(string(resp))
 
 		expectedStatusCode := http.StatusInternalServerError
-		expectedPayload := `Internal Server Error`
+		expectedPayload := `{"error":"foo"}`
 		expectedLogBuffer := ""
 
 		if expectedStatusCode != statusCode {
@@ -75,7 +81,7 @@ func TestResponseBodyValidator(t *testing.T) {
 		respBody := strings.TrimSpace(string(resp))
 
 		expectedStatusCode := http.StatusNotFound
-		expectedPayload := "404 page not found"
+		expectedPayload := `{"error":"not found"}`
 		expectedLogBuffer := ""
 
 		if expectedStatusCode != statusCode {
@@ -131,21 +137,26 @@ func TestResponseBodyValidator(t *testing.T) {
 }
 
 func handleGetPetByIDFaked(w http.ResponseWriter, req *http.Request) {
+	// set Content-Type for all responses to ensure validator does not filter
+	// them out prior to other checks like response spec schema presence.
+	w.Header().Set("Content-Type", "application/json")
+
 	// fake not found
 	if req.URL.Path == "/v2/pet/404" {
-		http.NotFound(w, req)
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(`{"error":"not found"}`))
 		return
 	}
 
 	// fake for server error {
 	if req.URL.Path == "/v2/pet/500" {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error":"foo"}`))
 		return
 	}
 
 	// fake for bad json
 	if req.URL.Path == "/v2/pet/badjson" {
-		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"name":`))
 		return
 	}
@@ -159,7 +170,6 @@ func handleGetPetByIDFaked(w http.ResponseWriter, req *http.Request) {
 
 	p := pet{123, "Kitty"}
 
-	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(p); err != nil {
 		panic(err)
 	}

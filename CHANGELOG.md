@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- New feature: It is now possible to pass additional options to middlewares.
+In particular, the first available option is to provide Content-Type selectors
+to validators.
+
 ## [0.5.1] - 2018-03-14
 
 ### Fixed

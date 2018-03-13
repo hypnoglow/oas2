@@ -7,27 +7,46 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 
 	"github.com/hypnoglow/oas2/validate"
 )
 
 // BodyValidator returns new Middleware that validates request body
 // against parameters defined in OpenAPI 2.0 spec.
-func BodyValidator(errHandler RequestErrorHandler) Middleware {
-	return bodyValidatorMiddleware{errHandler: errHandler}.chain
+func BodyValidator(errHandler RequestErrorHandler, opts ...MiddlewareOption) Middleware {
+	options := MiddlewareOptions{}
+	for _, opt := range opts {
+		opt(&options)
+	}
+
+	selectors := []*regexp.Regexp{contentTypeSelectorRegexJSON, contentTypeSelectorRegexJSONAPI}
+	if options.contentTypeRegexSelectors != nil {
+		selectors = options.contentTypeRegexSelectors
+	}
+
+	return bodyValidatorMiddleware{errHandler: errHandler, selectors: selectors}.chain
 }
 
 type bodyValidatorMiddleware struct {
 	errHandler RequestErrorHandler
+	selectors  []*regexp.Regexp
 }
 
 func (m bodyValidatorMiddleware) chain(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		// TODO
-		if req.Header.Get("Content-Type") != "application/json" {
-			// Do not validate multipart/form.
-			// There will be built-in validation in oas package,
-			// but currently it's cumbersome to implement.
+		// Check content type of the request. If it does not match any selector,
+		// don't validate the request.
+		contentTypeMatch := false
+		contentType := req.Header.Get("Content-Type")
+		for _, selector := range m.selectors {
+			if selector.MatchString(contentType) {
+				contentTypeMatch = true
+				break
+			}
+		}
+
+		if !contentTypeMatch {
 			next.ServeHTTP(w, req)
 			return
 		}
