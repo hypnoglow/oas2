@@ -10,7 +10,7 @@ func TestLoadSpec(t *testing.T) {
 
 	t.Run("positive", func(t *testing.T) {
 		fpath := "/tmp/spec.json"
-		if err := ioutil.WriteFile(fpath, loadDoc().Raw(), 0755); err != nil {
+		if err := ioutil.WriteFile(fpath, loadDoc(petstore).Raw(), 0755); err != nil {
 			t.Fatalf("Unexpected error: %s", err)
 		}
 

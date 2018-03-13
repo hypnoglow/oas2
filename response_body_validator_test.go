@@ -18,7 +18,7 @@ func TestResponseBodyValidator(t *testing.T) {
 	logBuffer := &bytes.Buffer{}
 	errHandler := responseErrorHandler(logBuffer)
 
-	router, err := NewRouter(loadDoc().Spec(), handlers, Use(ResponseBodyValidator(errHandler)))
+	router, err := NewRouter(loadDoc(petstore).Spec(), handlers, Use(ResponseBodyValidator(errHandler)))
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}

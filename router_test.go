@@ -4,17 +4,17 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
-
-	"github.com/sirupsen/logrus"
 )
 
 func TestNewRouter(t *testing.T) {
-	doc := loadDoc()
+	doc := loadDoc(petstore)
 
 	handlers := OperationHandlers{
 		"addPet": http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -53,10 +53,9 @@ func TestNewRouter(t *testing.T) {
 
 func TestDebugLog(t *testing.T) {
 	buf := &bytes.Buffer{}
-	lg := logrus.New()
-	lg.Out = buf
+	lg := log.New(buf, "", log.LstdFlags)
 
-	opt := DebugLog(lg.Infof)
+	opt := DebugLog(lg.Printf)
 
 	router := &Router{}
 	opt(router)
@@ -89,5 +88,33 @@ func TestUse(t *testing.T) {
 
 	if len(r.mws) == 0 {
 		t.Errorf("Expected to apply middleware")
+	}
+}
+
+func TestServeSpec(t *testing.T) {
+	r, err := NewRouter(
+		loadDoc(petstore).Spec(),
+		OperationHandlers{},
+		ServeSpec(SpecHandlerTypeStatic),
+	)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/v2", nil)
+	r.ServeHTTP(w, req)
+
+	spec := loadDoc(w.Body.Bytes()).Spec()
+
+	var paths []string
+	for name := range spec.Paths.Paths {
+		paths = append(paths, name)
+	}
+	sort.Strings(paths)
+
+	expectedPaths := []string{"/pet", "/pet/{petId}", "/user/login"}
+	if !reflect.DeepEqual(expectedPaths, paths) {
+		t.Errorf("Expected output spec paths to be %v but got %v", expectedPaths, paths)
 	}
 }

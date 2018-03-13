@@ -9,8 +9,8 @@ import (
 	"github.com/go-openapi/validate"
 )
 
-func loadDoc() *loads.Document {
-	yml, err := swag.BytesToYAMLDoc(sp)
+func loadDoc(b []byte) *loads.Document {
+	yml, err := swag.BytesToYAMLDoc(b)
 	if err != nil {
 		log.Fatalf("failed to convert spec to yaml: %v", err)
 	}
@@ -36,7 +36,7 @@ func loadDoc() *loads.Document {
 	return doc
 }
 
-var sp = []byte(`
+var petstore = []byte(`
 swagger: "2.0"
 info:
   description: "This is a sample server Petstore server."

@@ -86,7 +86,7 @@ Define what options (logger, middleware) you will use:
 ```go
 logger := logrus.New()
 logger.SetLevel(logrus.DebugLevel)
-queryValidator := oas.NewQueryValidator(errHandler)
+queryValidator := oas.QueryValidator(errHandler)
 ```
 
 Create a router:
