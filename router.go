@@ -47,7 +47,6 @@ func NewRouter(
 
 	// Serve the specification itself if enabled.
 	if router.serveSpec != 0 {
-		sw.Paths.Paths[getSpecificationOperationPath] = getSpecificationOperation()
 		var specHandler http.Handler
 		switch router.serveSpec {
 		case SpecHandlerTypeDynamic:
@@ -55,7 +54,7 @@ func NewRouter(
 		case SpecHandlerTypeStatic:
 			specHandler = StaticSpecHandler(sw)
 		}
-		base.Route(http.MethodGet, sw.BasePath+getSpecificationOperationPath, specHandler)
+		base.Route(http.MethodGet, sw.BasePath, specHandler)
 	}
 
 	for method, pathOps := range analysis.New(sw).Operations() {

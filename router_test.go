@@ -4,14 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"sort"
 	"strings"
 	"testing"
-
-	"github.com/sirupsen/logrus"
 )
 
 func TestNewRouter(t *testing.T) {
@@ -54,10 +53,9 @@ func TestNewRouter(t *testing.T) {
 
 func TestDebugLog(t *testing.T) {
 	buf := &bytes.Buffer{}
-	lg := logrus.New()
-	lg.Out = buf
+	lg := log.New(buf, "", log.LstdFlags)
 
-	opt := DebugLog(lg.Infof)
+	opt := DebugLog(lg.Printf)
 
 	router := &Router{}
 	opt(router)
@@ -104,7 +102,7 @@ func TestServeSpec(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/v2/openapi.yaml", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v2", nil)
 	r.ServeHTTP(w, req)
 
 	spec := loadDoc(w.Body.Bytes()).Spec()
@@ -115,7 +113,7 @@ func TestServeSpec(t *testing.T) {
 	}
 	sort.Strings(paths)
 
-	expectedPaths := []string{"/openapi.yaml", "/pet", "/pet/{petId}", "/user/login"}
+	expectedPaths := []string{"/pet", "/pet/{petId}", "/user/login"}
 	if !reflect.DeepEqual(expectedPaths, paths) {
 		t.Errorf("Expected output spec paths to be %v but got %v", expectedPaths, paths)
 	}
