@@ -9,11 +9,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- New feature: add option [`ServeSpec`](https://github.com/hypnoglow/oas2/blob/4b7ce7cc55bdd7cbb66e94e8af94f3dd08e8fc01/router.go#L127) for router to serve its OpenAPI spec under the base path.
 - New tool: [oas-expand](https://github.com/hypnoglow/oas2/tree/7678e995b788570a0483e667e030f8c7166a6681/cmd/oas-expand) expands all `$ref`s in spec to improve startup time of
 the application.
 - OpenAPI parameter with `type: string` and `format: uuid` is now supported.
 
 ### Changed
 
-- Replaced self-written response recorder with [chi's](https://github.com/go-chi/chi/blob/master/middleware/wrap_writer18.go#L12) 
+- **Breaking Change** `JsonError` renamed to`JSONError`.
+- Replaced internally-used self-written response recorder with [chi's](https://github.com/go-chi/chi/blob/master/middleware/wrap_writer18.go#L12) 
 - The project now has more advanced CI checks.
