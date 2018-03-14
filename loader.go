@@ -1,14 +1,6 @@
 package oas
 
 import (
-	"crypto/sha512"
-	"encoding/hex"
-	"encoding/json"
-	"fmt"
-	"io"
-	"os"
-	"path/filepath"
-
 	"github.com/go-openapi/loads"
 	"github.com/go-openapi/spec"
 	"github.com/go-openapi/strfmt"
@@ -22,43 +14,23 @@ type LoadSpecOption struct {
 	value      interface{}
 }
 
-// CacheDir is an option for LoadSpec that sets cache directory for faster
-// spec loads.
-func CacheDir(dir string) *LoadSpecOption {
+// Validation is an option for LoadSpec that tells loader
+// whether validation should be performed or not.
+func Validation(val bool) *LoadSpecOption {
 	return &LoadSpecOption{
-		optionType: cacheDirOption,
-		value:      dir,
+		optionType: validationOption,
+		value:      val,
 	}
 }
 
-// LoadSpec opens an OpenAPI Specification v2.0 document, expands all references within it,
-// then validates the spec and returns spec document.
+// LoadSpec opens an OpenAPI Specification v2.0 document from file.
 func LoadSpec(fpath string, opts ...*LoadSpecOption) (document *loads.Document, err error) {
-	var cacheDir string
+	validate := true
 
 	for _, opt := range opts {
-		if val, ok := opt.value.(string); ok && opt.optionType == cacheDirOption {
-			cacheDir = val
+		if val, ok := opt.value.(bool); ok && opt.optionType == validationOption {
+			validate = val
 		}
-	}
-
-	// Load from cache.
-
-	var cacheFilename string
-	var hashSum string
-	if cacheDir != "" {
-		hashSum, err = hashFile(fpath)
-		if err != nil {
-			return nil, errors.Wrap(err, "calculate file hash")
-		}
-
-		cacheFilename = filepath.Join(cacheDir, fmt.Sprintf("spec-%s", hashSum))
-		document, err = loads.JSONSpec(cacheFilename)
-		if err == nil {
-			return document, nil
-		}
-
-		// if an error occurred - ignore it and continue.
 	}
 
 	// Load regularly.
@@ -68,55 +40,37 @@ func LoadSpec(fpath string, opts ...*LoadSpecOption) (document *loads.Document, 
 		return nil, errors.Wrap(err, "Failed to load spec")
 	}
 
-	document, err = document.Expanded(&spec.ExpandOptions{RelativeBase: fpath})
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to expand spec")
-	}
-
-	if err = validate.Spec(document, strfmt.Default); err != nil {
-		return nil, errors.Wrap(err, "Spec is invalid")
-	}
-
-	if cacheDir == "" {
-		return document, nil
-	}
-
-	// Cache expanded spec.
-
-	if err = os.MkdirAll(filepath.Dir(cacheFilename), 0700); err != nil {
-		return document, errors.Wrap(err, "create cache dir")
-	}
-
-	f, err := os.Create(cacheFilename)
-	if err != nil {
-		return document, errors.Wrap(err, "create cache file")
-	}
-	defer f.Close()
-
-	if err = json.NewEncoder(f).Encode(document.Spec()); err != nil {
-		return document, errors.Wrap(err, "write cache file")
+	if validate {
+		if err := ValidateSpec(fpath); err != nil {
+			return nil, errors.Wrap(err, "Spec is invalid")
+		}
 	}
 
 	return document, nil
 }
 
+// ValidateSpec opens an OpenAPI Specification v2.0 document from file, expands all
+// references within it, then validates the spec.
+func ValidateSpec(fpath string) error {
+	document, err := loads.Spec(fpath)
+	if err != nil {
+		return errors.Wrap(err, "failed to load spec")
+	}
+
+	document, err = document.Expanded(&spec.ExpandOptions{RelativeBase: fpath})
+	if err != nil {
+		return errors.Wrap(err, "failed to expand spec")
+	}
+
+	if err = validate.Spec(document, strfmt.Default); err != nil {
+		return errors.Wrap(err, "spec is invalid")
+	}
+
+	return nil
+}
+
 type optionType string
 
 const (
-	cacheDirOption optionType = "cache directory"
+	validationOption optionType = "skip validation"
 )
-
-func hashFile(path string) (string, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return "", errors.Wrap(err, "open spec file")
-	}
-	defer f.Close()
-
-	h := sha512.New512_256()
-	if _, err := io.Copy(h, f); err != nil {
-		return "", errors.Wrap(err, "copy file to hash")
-	}
-
-	return hex.EncodeToString(h.Sum(nil)), nil
-}
