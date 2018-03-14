@@ -29,13 +29,52 @@ func TestLoadSpec(t *testing.T) {
 		}
 	})
 
+	t.Run("should fail on spec validation", func(t *testing.T) {
+		fpath := "/tmp/spec-that-fails-validation.json"
+		if err := ioutil.WriteFile(fpath, []byte(specThatFailsValidation), 0755); err != nil {
+			t.Fatalf("Unexpected error: %s", err)
+		}
+
+		_, err := LoadSpec(fpath)
+		if err == nil {
+			t.Fatal("Expected error, but got nil")
+		}
+
+		_ = os.Remove(fpath)
+	})
+
+}
+
+func TestValidateSpec(t *testing.T) {
+
+	t.Run("positive", func(t *testing.T) {
+		fpath := "/tmp/spec.json"
+		if err := ioutil.WriteFile(fpath, loadDoc(petstore).Raw(), 0755); err != nil {
+			t.Fatalf("Unexpected error: %s", err)
+		}
+
+		err := ValidateSpec(fpath)
+		if err != nil {
+			t.Fatalf("Unexpected error: %s", err)
+		}
+
+		_ = os.Remove(fpath)
+	})
+
+	t.Run("file not found", func(t *testing.T) {
+		err := ValidateSpec("/tmp/non/existent/file.yaml")
+		if err == nil {
+			t.Fatal("Expected error, but got nil")
+		}
+	})
+
 	t.Run("should fail on spec expansion", func(t *testing.T) {
 		fpath := "/tmp/spec-that-fails-expansion.json"
 		if err := ioutil.WriteFile(fpath, []byte(specThatFailsToExpand), 0755); err != nil {
 			t.Fatalf("Unexpected error: %s", err)
 		}
 
-		_, err := LoadSpec(fpath)
+		err := ValidateSpec(fpath)
 		if err == nil {
 			t.Fatal("Expected error, but got nil")
 		}
@@ -49,7 +88,7 @@ func TestLoadSpec(t *testing.T) {
 			t.Fatalf("Unexpected error: %s", err)
 		}
 
-		_, err := LoadSpec(fpath)
+		err := ValidateSpec(fpath)
 		if err == nil {
 			t.Fatal("Expected error, but got nil")
 		}
