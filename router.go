@@ -58,10 +58,10 @@ func NewRouter(
 	}
 
 	for method, pathOps := range analysis.New(sw).Operations() {
-		for path, op := range pathOps {
-			handler, ok := handlers[OperationID(op.ID)]
+		for path, operation := range pathOps {
+			handler, ok := handlers[OperationID(operation.ID)]
 			if !ok {
-				router.debugLog("oas: no handler registered for operation %s", op.ID)
+				router.debugLog("oas: no handler registered for operation %s", operation.ID)
 				continue
 			}
 
@@ -71,13 +71,24 @@ func NewRouter(
 				handler = mwf(handler)
 			}
 
-			// Add all path parameters to operation parameters.
+			// Copy operation to keep original operation unmodified.
+			op := &spec.Operation{}
+			if err := copyOperation(op, operation); err != nil {
+				return router, err
+			}
+
+			// Add all path parameters to operation parameters
+			// so operation in request context will be self-sufficient.
+			// This is required for middlewares that use OpenAPI operation.
 			for _, pathParam := range sw.Paths.Paths[path].Parameters {
 				op.AddParam(&pathParam)
 			}
 
-			router.debugLog("oas: handle %s %s", method, sw.BasePath+path)
+			// Apply middleware to inject operation into every request
+			// to make middlewares able to use it.
 			handler = newOperationMiddleware(op)(handler)
+
+			router.debugLog("oas: handle %s %s", method, sw.BasePath+path)
 			base.Route(method, sw.BasePath+path, handler)
 		}
 	}
