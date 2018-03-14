@@ -14,7 +14,7 @@ func TestQueryValidator(t *testing.T) {
 		"loginUser": http.HandlerFunc(handleUserLogin),
 	}
 	errHandler := makeErrorHandler()
-	router, err := NewRouter(loadDoc(petstore).Spec(), handlers, Use(QueryValidator(errHandler)))
+	router, err := NewRouter(loadDoc(petstore), handlers, Use(QueryValidator(errHandler)))
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}

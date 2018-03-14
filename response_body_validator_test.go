@@ -21,7 +21,7 @@ func TestResponseBodyValidator(t *testing.T) {
 	rbv := ResponseBodyValidator(errHandler, ContentTypeRegexSelector(contentTypeSelectorRegexJSON))
 
 	router, err := NewRouter(
-		loadDoc(petstore).Spec(),
+		loadDoc(petstore),
 		handlers,
 		Use(rbv),
 	)

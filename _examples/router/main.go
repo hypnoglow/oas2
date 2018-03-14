@@ -18,7 +18,7 @@ func main() {
 	flag.StringVar(&specPath, "spec", "", "Path to spec.yaml")
 	flag.Parse()
 
-	doc, err := oas.LoadSpec(specPath)
+	doc, err := oas.LoadFile(specPath)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -40,7 +40,7 @@ func main() {
 	errHandler := middlewareErrorHandler(lg)
 
 	router, err := oas.NewRouter(
-		doc.Spec(),
+		doc,
 		handlers,
 		oas.Base(oas.ChiAdapter(baseRouter)),
 		oas.DebugLog(lg.Debugf),

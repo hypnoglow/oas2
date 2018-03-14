@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestLoadSpec(t *testing.T) {
+func TestLoadFile(t *testing.T) {
 
 	t.Run("positive", func(t *testing.T) {
 		fpath := "/tmp/spec.json"
@@ -14,7 +14,7 @@ func TestLoadSpec(t *testing.T) {
 			t.Fatalf("Unexpected error: %s", err)
 		}
 
-		_, err := LoadSpec(fpath)
+		_, err := LoadFile(fpath)
 		if err != nil {
 			t.Fatalf("Unexpected error: %s", err)
 		}
@@ -23,7 +23,7 @@ func TestLoadSpec(t *testing.T) {
 	})
 
 	t.Run("file not found", func(t *testing.T) {
-		_, err := LoadSpec("/tmp/non/existent/file.yaml")
+		_, err := LoadFile("/tmp/non/existent/file.yaml")
 		if err == nil {
 			t.Fatal("Expected error, but got nil")
 		}
@@ -35,7 +35,7 @@ func TestLoadSpec(t *testing.T) {
 			t.Fatalf("Unexpected error: %s", err)
 		}
 
-		_, err := LoadSpec(fpath)
+		_, err := LoadFile(fpath)
 		if err == nil {
 			t.Fatal("Expected error, but got nil")
 		}
@@ -49,7 +49,7 @@ func TestLoadSpec(t *testing.T) {
 			t.Fatalf("Unexpected error: %s", err)
 		}
 
-		_, err := LoadSpec(fpath)
+		_, err := LoadFile(fpath)
 		if err == nil {
 			t.Fatal("Expected error, but got nil")
 		}

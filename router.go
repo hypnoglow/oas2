@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-openapi/analysis"
+	"github.com/go-openapi/loads"
 	"github.com/go-openapi/spec"
 )
 
@@ -24,7 +25,7 @@ func (r Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // NewRouter returns a new Router.
 func NewRouter(
-	sw *spec.Swagger,
+	doc *loads.Document,
 	handlers OperationHandlers,
 	options ...RouterOption,
 ) (Router, error) {
@@ -50,14 +51,14 @@ func NewRouter(
 		var specHandler http.Handler
 		switch router.serveSpec {
 		case SpecHandlerTypeDynamic:
-			specHandler = DynamicSpecHandler(sw)
+			specHandler = DynamicSpecHandler(doc.OrigSpec())
 		case SpecHandlerTypeStatic:
-			specHandler = StaticSpecHandler(sw)
+			specHandler = StaticSpecHandler(doc.OrigSpec())
 		}
-		base.Route(http.MethodGet, sw.BasePath, specHandler)
+		base.Route(http.MethodGet, doc.Spec().BasePath, specHandler)
 	}
 
-	for method, pathOps := range analysis.New(sw).Operations() {
+	for method, pathOps := range analysis.New(doc.Spec()).Operations() {
 		for path, operation := range pathOps {
 			handler, ok := handlers[OperationID(operation.ID)]
 			if !ok {
@@ -80,7 +81,7 @@ func NewRouter(
 			// Add all path parameters to operation parameters
 			// so operation in request context will be self-sufficient.
 			// This is required for middlewares that use OpenAPI operation.
-			for _, pathParam := range sw.Paths.Paths[path].Parameters {
+			for _, pathParam := range doc.Spec().Paths.Paths[path].Parameters {
 				op.AddParam(&pathParam)
 			}
 
@@ -88,8 +89,8 @@ func NewRouter(
 			// to make middlewares able to use it.
 			handler = newOperationMiddleware(op)(handler)
 
-			router.debugLog("oas: handle %s %s", method, sw.BasePath+path)
-			base.Route(method, sw.BasePath+path, handler)
+			router.debugLog("oas: handle %s %s", method, doc.Spec().BasePath+path)
+			base.Route(method, doc.Spec().BasePath+path, handler)
 		}
 	}
 
