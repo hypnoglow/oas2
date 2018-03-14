@@ -1,7 +1,9 @@
 package oas
 
 import (
+	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"reflect"
 
@@ -14,8 +16,18 @@ const (
 	tag = "oas"
 )
 
-// DecodeQuery decodes query parameters by their spec to the dst.
-func DecodeQuery(ps []spec.Parameter, q url.Values, dst interface{}) error {
+// DecodeQuery decodes all query params by request operation spec to the dst.
+func DecodeQuery(req *http.Request, dst interface{}) error {
+	op := GetOperation(req)
+	if op == nil {
+		return errors.New("request has no operation in its context")
+	}
+
+	return DecodeQueryParams(op.Parameters, req.URL.Query(), dst)
+}
+
+// DecodeQueryParams decodes query parameters by their spec to the dst.
+func DecodeQueryParams(ps []spec.Parameter, q url.Values, dst interface{}) error {
 	dv := reflect.ValueOf(dst)
 	if dv.Kind() != reflect.Ptr {
 		return fmt.Errorf("dst is not a pointer to struct (cannot modify)")

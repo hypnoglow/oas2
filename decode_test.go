@@ -9,7 +9,7 @@ import (
 	"github.com/go-openapi/spec"
 )
 
-func ExampleDecodeQuery() {
+func ExampleDecodeQueryParams() {
 	// In real app parameters will be taken from spec document (yaml or json).
 	params := []spec.Parameter{
 		*spec.QueryParam("name").Typed("string", ""),
@@ -29,7 +29,7 @@ func ExampleDecodeQuery() {
 	}
 
 	var m member
-	if err := DecodeQuery(params, query, &m); err != nil {
+	if err := DecodeQueryParams(params, query, &m); err != nil {
 		panic(err)
 	}
 
@@ -39,7 +39,7 @@ func ExampleDecodeQuery() {
 	// oas.member{Name:"John", Age:27, LovesApples:true}
 }
 
-func TestDecodeQuery(t *testing.T) {
+func TestDecodeQueryParams(t *testing.T) {
 	type (
 		// nolint: megacheck
 		user struct {
@@ -326,7 +326,7 @@ func TestDecodeQuery(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		err := DecodeQuery(c.ps, c.q, c.dst)
+		err := DecodeQueryParams(c.ps, c.q, c.dst)
 		if !reflect.DeepEqual(c.expectedError, err) {
 			t.Errorf("Expected error to be %v but got %v", c.expectedError, err)
 		}
