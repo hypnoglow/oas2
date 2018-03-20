@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	chimw "github.com/go-chi/chi/middleware"
 
@@ -13,12 +14,23 @@ import (
 
 // ResponseBodyValidator returns new Middleware that validates response body
 // against schema defined in OpenAPI 2.0 spec.
-func ResponseBodyValidator(errHandler ResponseErrorHandler) Middleware {
-	return responseBodyValidator{errHandler}.chain
+func ResponseBodyValidator(errHandler ResponseErrorHandler, opts ...MiddlewareOption) Middleware {
+	options := MiddlewareOptions{}
+	for _, opt := range opts {
+		opt(&options)
+	}
+
+	selectors := []*regexp.Regexp{contentTypeSelectorRegexJSON, contentTypeSelectorRegexJSONAPI}
+	if options.contentTypeRegexSelectors != nil {
+		selectors = options.contentTypeRegexSelectors
+	}
+
+	return responseBodyValidator{errHandler, selectors}.chain
 }
 
 type responseBodyValidator struct {
 	errHandler ResponseErrorHandler
+	selectors  []*regexp.Regexp
 }
 
 func (m responseBodyValidator) chain(next http.Handler) http.Handler {
@@ -35,8 +47,18 @@ func (m responseBodyValidator) chain(next http.Handler) http.Handler {
 
 		next.ServeHTTP(rr, req)
 
-		// Only json body can be validated currently.
-		if w.Header().Get("Content-Type") != "application/json" {
+		// Check content type of the response. If it does not match any selector,
+		// don't validate the request.
+		contentTypeMatch := false
+		contentType := w.Header().Get("Content-Type")
+		for _, selector := range m.selectors {
+			if selector.MatchString(contentType) {
+				contentTypeMatch = true
+				break
+			}
+		}
+
+		if !contentTypeMatch {
 			return
 		}
 
