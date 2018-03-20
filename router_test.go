@@ -23,7 +23,7 @@ func TestNewRouter(t *testing.T) {
 	}
 
 	// router with default base router
-	r, err := NewRouter(doc.Spec(), handlers)
+	r, err := NewRouter(doc, handlers)
 	if err != nil {
 		t.Fatalf("failed to create router: %v", err)
 	}
@@ -93,7 +93,7 @@ func TestUse(t *testing.T) {
 
 func TestServeSpec(t *testing.T) {
 	r, err := NewRouter(
-		loadDoc(petstore).Spec(),
+		loadDoc(petstore),
 		OperationHandlers{},
 		ServeSpec(SpecHandlerTypeStatic),
 	)

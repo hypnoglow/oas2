@@ -7,7 +7,7 @@
 [![GitHub release](https://img.shields.io/github/tag/hypnoglow/oas2.svg)](https://github.com/hypnoglow/oas2/releases)
 [![License MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
 
-**WIP. Not stable yet. API may change at any time. Use a vendoring tool of your
+**Note that this is not stable yet. In accordance with semantic versioning, the API can change between any minor versions. Use a vendoring tool of your
 preference to lock an exact [release](https://github.com/hypnoglow/oas2/releases) version.**
 
 Package oas2 provides utilities for building APIs using the OpenAPI 2.0 
@@ -45,7 +45,7 @@ or any other.
 
 Let's dive into a simple example.
 
-Given a spec: [petstore.yaml](examples/petstore.yaml)
+Given a spec: [petstore.yaml](_examples/petstore.yaml)
 
 First of all, load your spec in your app (note that though package import path ends in `oas2`, the package namespace is actually `oas`):
 
@@ -55,29 +55,29 @@ import "github.com/hypnoglow/oas2"
 // ...
 
 // specPath is a path to your spec file.
-doc, _ := oas.LoadSpec(specPath)
+doc, _ := oas.LoadFile(specPath)
 ```
 
 Next, create an [operation](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#operationObject) handler. 
-Let's define a handler for `loginUser` operation:
+Let's define a handler for `findPetsByStatus` operation:
 
 ```go
-func loginHandler(w http.ResponseWriter, req *http.Request) {
-    username := req.URL.Query().Get("username")
-    password := req.URL.Query().Get("password")
-    
-    if login(username, password) {
-        w.WriteHeader(http.StatusOK)
-        return
-    }
-    
-    w.WriteHeader(http.StatusBadRequest)
+type FindPetsByStatusHandler struct {
+	storage PetStorage
+}
+
+func (h FindPetsByStatusHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	statuses := req.URL.Query()["status"]
+
+	pets := h.storage.FindByStatus(statuses)
+
+	_ = json.NewEncoder(w).Encode(pets)
 }
 ```
 
 ```go
 handlers := oas.OperationHandlers{
-    "loginUser":    http.HandlerFunc(loginHandler),
+    "findPetsByStatus":    findPetsByStatus{},
 }
 ```
 
@@ -93,7 +93,7 @@ Create a router:
 
 ```go
 router, _ := oas.NewRouter(
-    doc.Spec(), 
+    doc, 
     handlers, 
     oas.DebugLog(logger.Debugf), 
     oas.Use(queryValidator)
@@ -113,7 +113,7 @@ func if any error occured during validation. The router also sets the operation
 identifier to each request's context, so it can be used in a handler or any custom
 middleware.
 
-See the full [example](examples/router/main.go) for the complete code.
+See the full [example](_examples/router/main.go) for the complete code.
 
 ### Decode query parameters to a struct
 

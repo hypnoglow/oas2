@@ -46,7 +46,7 @@ func main() {
 
 	// Save expanded spec to file in dir
 	if targetDir != "" {
-		if _, err := oas.LoadSpec(specFile, oas.CacheDir(targetDir)); err != nil {
+		if _, err := oas.LoadFile(specFile, oas.LoadCacheDir(targetDir)); err != nil {
 			fmt.Printf("Error: %s\n", err)
 			os.Exit(1)
 		}
@@ -55,7 +55,7 @@ func main() {
 	}
 
 	// Print expanded spec to stdout
-	document, err := oas.LoadSpec(specFile)
+	document, err := oas.LoadFile(specFile)
 	if err != nil {
 		fmt.Printf("Error: %s\n\n", err)
 		os.Exit(1)
