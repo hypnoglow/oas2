@@ -13,6 +13,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 In particular, the first available option is to provide Content-Type selectors
 to validators.
 
+### Changed
+
+- **Breaking Change** Router now accepts a document instead of a spec. This 
+allows, among other things, to access original spec, which is used when serving 
+router spec.
+- **Breaking Change** `LoadSpec` function is replaced with `LoadFile`, which 
+works almost the same way, but provides more options, for example to set
+spec host when loading.
+
 ## [0.5.1] - 2018-03-14
 
 ### Fixed
