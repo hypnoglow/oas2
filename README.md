@@ -149,12 +149,14 @@ And populate it:
 
 ```go
 var m Member 
-oas.DecodeQuery(paramSpec, req.URL.Query(), &m)
+oas.DecodeQuery(req, &m)
 
 fmt.Printf("%#v", m) // Member{Name:"John", Age:27, LovesApples:true}
 ```
 
-See [`godoc example`](https://godoc.org/github.com/hypnoglow/oas2#example-DecodeQuery) for complete example code.
+Note that it works only with oas router, because it needs to extract operation
+spec from the request. To use custom parameters spec, use `oas.DecodeQueryParams()`.
+See [`godoc example`](https://godoc.org/github.com/hypnoglow/oas2#example-DecodeQueryParams) for details.
 
 ### Pluggable formats & validators
 
