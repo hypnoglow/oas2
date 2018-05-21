@@ -158,7 +158,7 @@ func TestDecodeQueryParams(t *testing.T) {
 			ps: []spec.Parameter{
 				{
 					ParamProps: spec.ParamProps{
-						Name: "name",
+						Name: "nickname",
 						In:   "query",
 					},
 					SimpleSchema: spec.SimpleSchema{
@@ -167,23 +167,23 @@ func TestDecodeQueryParams(t *testing.T) {
 				},
 				{
 					ParamProps: spec.ParamProps{
-						Name: "sex",
+						Name: "loves_apples",
 						In:   "query",
 					},
 					SimpleSchema: spec.SimpleSchema{
-						Type:    "string",
+						Type:    "boolean",
 						Default: 123,
 					},
 				},
 			},
 			q: url.Values{
-				"name": []string{"John"},
+				"nickname": []string{"John"},
 			},
-			dst: &user{},
-			expectedData: &user{
-				Name: "John",
+			dst: &member{},
+			expectedData: &member{
+				Nickname: "John",
 			},
-			expectedError: fmt.Errorf("value of type int is not assignable to field Sex of type string"),
+			expectedError: fmt.Errorf("cannot use values [123] as parameter loves_apples with type boolean"),
 		},
 		{
 			// Different types of query parameters
@@ -334,5 +334,35 @@ func TestDecodeQueryParams(t *testing.T) {
 		if !reflect.DeepEqual(c.expectedData, c.dst) {
 			t.Errorf("Expected dst to be %v but got %v", c.expectedData, c.dst)
 		}
+	}
+}
+
+func TestDecodeQueryIntegerParameterWithDefault(t *testing.T) {
+	params := []spec.Parameter{
+		{
+			ParamProps: spec.ParamProps{
+				Name: "limit",
+				In:   "query",
+			},
+			SimpleSchema: spec.SimpleSchema{
+				Type:    "integer",
+				Format:  "int64",
+				Default: float64(10),
+			},
+		},
+	}
+
+	q := url.Values{}
+
+	var input struct {
+		Limit int64 `oas:"limit"`
+	}
+
+	if err := DecodeQueryParams(params, q, &input); err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if input.Limit != 10 {
+		t.Fatalf("Expected limit to be 10 but got %v", input.Limit)
 	}
 }

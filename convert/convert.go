@@ -69,6 +69,16 @@ var evaluatesAsTrue = map[string]struct{}{
 	"enabled":  struct{}{},
 }
 
+var evaluatesAsFalse = map[string]struct{}{
+	"false":    struct{}{},
+	"0":        struct{}{},
+	"no":       struct{}{},
+	"n":        struct{}{},
+	"off":      struct{}{},
+	"f":        struct{}{},
+	"disabled": struct{}{},
+}
+
 func convertString(val, format string) (interface{}, error) {
 	switch format {
 	case "":
@@ -134,6 +144,12 @@ func convertNumber(val, format string) (interface{}, error) {
 }
 
 func convertBoolean(val string) (interface{}, error) {
-	_, ok := evaluatesAsTrue[strings.ToLower(val)]
-	return ok, nil
+	v := strings.ToLower(val)
+	if _, ok := evaluatesAsTrue[v]; ok {
+		return true, nil
+	}
+	if _, ok := evaluatesAsFalse[v]; ok {
+		return false, nil
+	}
+	return false, fmt.Errorf("unknown format %s for type boolean", val)
 }

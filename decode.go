@@ -50,24 +50,35 @@ func DecodeQueryParams(ps []spec.Parameter, q url.Values, dst interface{}) error
 		vals, ok := q[p.Name]
 		if !ok {
 			// No such value in query.
-			if p.Default != nil {
-				// Populate with default value.
-				if err := set(p.Default, f, dv); err != nil {
-					return err
-				}
+			// If there is default - use it, otherwise skip this value.
+			if p.Default == nil {
+				continue
 			}
-			continue
+
+			// Default value can be in a weird format internally, e.g.
+			// when spec gets parsed default value for integer can be of
+			// type float64. So we cannot assign it directly. We need to
+			// proceed with conversion procedure.
+			vals = []string{fmt.Sprintf("%v", p.Default)}
 		}
 
 		// Convert value by type+format in parameter.
 		v, err := convert.Parameter(vals, &p)
 		if err != nil {
+			if p.Format != "" {
+				return fmt.Errorf(
+					"cannot use values %v as parameter %s with type %s and format %s",
+					vals,
+					p.Name,
+					p.Type,
+					p.Format,
+				)
+			}
 			return fmt.Errorf(
-				"cannot use values %v as parameter %s with type %s and format %s",
+				"cannot use values %v as parameter %s with type %s",
 				vals,
 				p.Name,
 				p.Type,
-				p.Format,
 			)
 		}
 
