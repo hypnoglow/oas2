@@ -22,6 +22,10 @@ router spec.
 works almost the same way, but provides more options, for example to set
 spec host when loading.
 
+### Fixed
+
+- Fixed a bug about type conversion for `default` values of query parameters.
+
 ## [0.5.1] - 2018-03-14
 
 ### Fixed
