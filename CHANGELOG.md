@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.0] - 2018-05-22
 
 ### Added
 
@@ -21,6 +21,9 @@ router spec.
 - **Breaking Change** `LoadSpec` function is replaced with `LoadFile`, which 
 works almost the same way, but provides more options, for example to set
 spec host when loading.
+- **Breaking Change** `DecodeQuery` now accepts request and extracts operation 
+spec from it, so developer no longer need to extract operation params from request
+only to use them in `DecodeQuery`. Old function moved to `DecodeQueryParams`.
 
 ### Fixed
 
