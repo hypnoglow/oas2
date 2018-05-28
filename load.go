@@ -93,26 +93,38 @@ func loadDocument(fpath, cacheDir string) (*loads.Document, error) {
 		return nil, errors.Wrap(err, "calculate file hash")
 	}
 
-	var expandedDocument *loads.Document
-	expandedDocument, err = loadExpandedFromCache(cacheDir, hashSum)
-	if err != nil {
-		// If cannot load from cache for some reason - expand originalg spec.
-
-		expandedDocument, err = document.Expanded(&spec.ExpandOptions{RelativeBase: fpath})
-		if err != nil {
-			return nil, errors.Wrap(err, "expand spec")
-		}
-
-		if err = validate.Spec(document, strfmt.Default); err != nil {
-			return nil, errors.Wrap(err, "validate spec")
-		}
-
-		if err := saveExpandedToCache(expandedDocument, cacheDir, hashSum); err != nil {
-			return nil, errors.Wrap(err, "save expanded spec to cache")
-		}
+	if exp, err := loadExpandedFromCache(cacheDir, hashSum); err == nil {
+		// When document loaded from cache, it is safe to use exp.Raw()
+		doc, e := loads.Embedded(document.Raw(), exp.Raw())
+		return doc, errors.Wrap(e, "create embedded document")
 	}
 
-	doc, err := loads.Embedded(document.Raw(), expandedDocument.Raw())
+	// If cannot load from cache for some reason - expand original spec.
+
+	// We assume that everything cached is valid, but when cache is empty -
+	// we need to validate the original document.
+	if err = validate.Spec(document, strfmt.Default); err != nil {
+		return nil, errors.Wrap(err, "validate spec")
+	}
+
+	exp, err := document.Expanded(&spec.ExpandOptions{RelativeBase: fpath})
+	if err != nil {
+		return nil, errors.Wrap(err, "expand spec")
+	}
+
+	if err = saveExpandedToCache(exp, cacheDir, hashSum); err != nil {
+		return nil, errors.Wrap(err, "save expanded spec to cache")
+	}
+
+	// To use expanded document right away, we need to get raw from it.
+	// WARNING: When document is expanded in memory like above, exp.Raw() still
+	// returns not expanded spec, so do not try to use it here.
+	expBytes, err := exp.Spec().MarshalJSON()
+	if err != nil {
+		return nil, errors.Wrap(err, "convert expanded spec to raw")
+	}
+
+	doc, err := loads.Embedded(document.Raw(), json.RawMessage(expBytes))
 	return doc, errors.Wrap(err, "create embedded document")
 }
 
