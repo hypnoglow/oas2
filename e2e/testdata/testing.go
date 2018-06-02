@@ -12,8 +12,10 @@ import (
 	"github.com/hypnoglow/oas2"
 )
 
+// GreetHandler is a simple handler that greets using a name.
 type GreetHandler struct{}
 
+// ServeHTTP implements http.Handler.
 func (GreetHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var query struct {
 		Name string `oas:"name"`
@@ -26,6 +28,7 @@ func (GreetHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, `{"greeting":"Hello, %s!"}`, query.Name)
 }
 
+// GreeterSpec returns an OpenAPI spec for greeter server.
 func GreeterSpec(t *testing.T) *loads.Document {
 	t.Helper()
 
