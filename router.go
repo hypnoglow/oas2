@@ -12,6 +12,7 @@ import (
 type Router struct {
 	debugLog   LogWriter
 	baseRouter BaseRouter
+	wrappers   []Middleware
 	mws        []Middleware
 
 	// serveSpec, if nonzero, makes router serve its spec.
@@ -43,8 +44,10 @@ func NewRouter(
 		router.baseRouter = defaultBaseRouter()
 	}
 
-	// Router handles all the spec operations.
-	base := router.baseRouter
+	// Apply router-wide middlewares
+	for _, mw := range router.wrappers {
+		router.baseRouter.Use(mw)
+	}
 
 	// Serve the specification itself if enabled.
 	if router.serveSpec != 0 {
@@ -55,7 +58,7 @@ func NewRouter(
 		case SpecHandlerTypeStatic:
 			specHandler = StaticSpecHandler(doc.OrigSpec())
 		}
-		base.Route(http.MethodGet, doc.Spec().BasePath, specHandler)
+		router.baseRouter.Route(http.MethodGet, doc.Spec().BasePath, specHandler)
 	}
 
 	for method, pathOps := range analysis.New(doc.Spec()).Operations() {
@@ -97,7 +100,7 @@ func NewRouter(
 			}
 
 			router.debugLog("oas: handle %s %s", method, doc.Spec().BasePath+path)
-			base.Route(method, doc.Spec().BasePath+path, handler)
+			router.baseRouter.Route(method, doc.Spec().BasePath+path, handler)
 		}
 	}
 
@@ -108,6 +111,7 @@ func NewRouter(
 // Any third-party router can be a BaseRouter by using adapter pattern.
 type BaseRouter interface {
 	http.Handler
+	Use(middleware func(http.Handler) http.Handler)
 	Route(method string, pathPattern string, handler http.Handler)
 }
 
@@ -135,7 +139,38 @@ func Base(br BaseRouter) RouterOption {
 	}
 }
 
+// Wrap returns an option that sets a middleware for the router.
+//
+// This middleware is applied to the router itself. Thus, this middleware
+// cannot extract operation spec from context. But, in contrast to Use, this
+// middleware can affect routing, so this is a proper option to use CORS and
+// similar.
+//
+// All oas-specific middlewares like oas.QueryValidator should use Use option
+// instead.
+//
+// Multiple middlewares will be executed exactly in the same order
+// they were passed to the router. For example:
+//  router, _ := oas.NewRouter(
+//      doc,
+//      handlers,
+//      oas.Wrap(RequestID),
+//      oas.Wrap(RequestLogger),
+//  )
+// Here the RequestLogger will be executed after RequestID and thus will be able
+// to use request id that RequestID middleware stored in a request context.
+func Wrap(mw Middleware) RouterOption {
+	return func(r *Router) {
+		r.wrappers = append(r.wrappers, mw)
+	}
+}
+
 // Use returns an option that sets a middleware for router operations.
+//
+// This middleware is applied to each operation handler. Thus, this middleware
+// can use request context to extract and use operation spec. Also, this
+// middleware cannot affect routing; for example, CORS middleware that handles
+// OPTIONS method for all routes won't work with Use; use Wrap option instead.
 //
 // Multiple middlewares will be executed exactly in the same order
 // they were passed to the router. For example:
@@ -148,8 +183,8 @@ func Base(br BaseRouter) RouterOption {
 // Here the RequestLogger will be executed after RequestID and thus will be able
 // to use request id that RequestID middleware stored in a request context.
 func Use(mw Middleware) RouterOption {
-	return func(args *Router) {
-		args.mws = append(args.mws, mw)
+	return func(r *Router) {
+		r.mws = append(r.mws, mw)
 	}
 }
 

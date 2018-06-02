@@ -56,11 +56,8 @@ func (m bodyValidatorMiddleware) chain(next http.Handler) http.Handler {
 			return
 		}
 
-		op := GetOperation(req)
-		if op == nil {
-			next.ServeHTTP(w, req)
-			return
-		}
+		// It's better to panic than to silently skip validation.
+		op := MustOperation(req)
 
 		// Read req.Body using io.TeeReader, so it can be read again
 		// in the actual request handler.

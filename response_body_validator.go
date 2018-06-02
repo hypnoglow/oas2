@@ -35,11 +35,8 @@ type responseBodyValidator struct {
 
 func (m responseBodyValidator) chain(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		op := GetOperation(req)
-		if op == nil {
-			next.ServeHTTP(w, req)
-			return
-		}
+		// It's better to panic than to silently skip validation.
+		op := MustOperation(req)
 
 		responseBodyBuffer := &bytes.Buffer{}
 		rr := chimw.NewWrapResponseWriter(w, 1)

@@ -59,7 +59,7 @@ func MustOperation(req *http.Request) *spec.Operation {
 		return op
 	}
 
-	panic("OAS operation not found in request context")
+	panic("request has no OpenAPI operation spec in its context")
 }
 
 type contextKeyOperation struct{}
