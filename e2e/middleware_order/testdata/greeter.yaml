@@ -1,0 +1,37 @@
+swagger: "2.0"
+info:
+  version: "1.0.0"
+  title: "Greeter server"
+basePath: "/api"
+paths:
+  /greeting:
+    get:
+      summary: "Returns a greeting for specific name"
+      operationId: "greet"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: query
+        name: name
+        description: |
+          Name to greet.
+          Example: "John Doe"
+        type: string
+        minLength: 1
+        required: true
+      responses:
+        200:
+          description: "Greeting"
+          schema:
+            type: object
+            properties:
+              greeting:
+                type: string
+            required:
+              - greeting
+        400:
+          description: "Invalid input"
+        500:
+          description: "Server error"
