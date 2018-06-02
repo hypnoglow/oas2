@@ -95,7 +95,7 @@ func NewRouter(
 
 				// Apply middleware to inject operation into every request
 				// to make middlewares able to use it.
-				handler = newOperationMiddleware(op)(handler)
+				handler = newOperationMiddleware(wrapOperation(op))(handler)
 			}
 
 			router.debugLog("oas: handle %s %s", method, doc.Spec().BasePath+path)

@@ -2,6 +2,7 @@ package oas
 
 import (
 	"github.com/go-openapi/loads"
+	"github.com/go-openapi/spec"
 )
 
 // This file contains wrappers around go-openapi/* packages exported types to
@@ -14,4 +15,13 @@ type Document struct {
 
 func wrapDocument(doc *loads.Document) *Document {
 	return &Document{Document: doc}
+}
+
+// Operation describes a single API operation on a path.
+type Operation struct {
+	*spec.Operation
+}
+
+func wrapOperation(op *spec.Operation) *Operation {
+	return &Operation{Operation: op}
 }

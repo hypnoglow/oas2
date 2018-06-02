@@ -3,8 +3,6 @@ package oas
 import (
 	"context"
 	"net/http"
-
-	"github.com/go-openapi/spec"
 )
 
 // OperationID is an operation identifier.
@@ -18,12 +16,12 @@ func (oid OperationID) String() string {
 // OperationHandlers maps OperationID to its handler.
 type OperationHandlers map[OperationID]http.Handler
 
-func newOperationMiddleware(op *spec.Operation) Middleware {
+func newOperationMiddleware(op *Operation) Middleware {
 	return operationMiddleware{op}.chain
 }
 
 type operationMiddleware struct {
-	operation *spec.Operation
+	operation *Operation
 }
 
 func (m operationMiddleware) chain(next http.Handler) http.Handler {
@@ -34,7 +32,7 @@ func (m operationMiddleware) chain(next http.Handler) http.Handler {
 }
 
 // WithOperation returns request with context value defining *spec.Operation.
-func WithOperation(req *http.Request, op *spec.Operation) *http.Request {
+func WithOperation(req *http.Request, op *Operation) *http.Request {
 	return req.WithContext(
 		context.WithValue(req.Context(), contextKeyOperation{}, op),
 	)
@@ -42,8 +40,8 @@ func WithOperation(req *http.Request, op *spec.Operation) *http.Request {
 
 // GetOperation returns *spec.Operation from the request's context.
 // In case of operation not found GetOperation returns nil.
-func GetOperation(req *http.Request) *spec.Operation {
-	op, ok := req.Context().Value(contextKeyOperation{}).(*spec.Operation)
+func GetOperation(req *http.Request) *Operation {
+	op, ok := req.Context().Value(contextKeyOperation{}).(*Operation)
 	if ok {
 		return op
 	}
@@ -53,7 +51,7 @@ func GetOperation(req *http.Request) *spec.Operation {
 
 // MustOperation returns *spec.Operation from the request's context.
 // In case of operation not found MustOperation panics.
-func MustOperation(req *http.Request) *spec.Operation {
+func MustOperation(req *http.Request) *Operation {
 	op := GetOperation(req)
 	if op != nil {
 		return op
