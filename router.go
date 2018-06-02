@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/go-openapi/analysis"
-	"github.com/go-openapi/loads"
 	"github.com/go-openapi/spec"
 )
 
@@ -26,7 +25,7 @@ func (r Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // NewRouter returns a new Router.
 func NewRouter(
-	doc *loads.Document,
+	doc *Document,
 	handlers OperationHandlers,
 	options ...RouterOption,
 ) (Router, error) {

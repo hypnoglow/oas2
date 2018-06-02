@@ -14,7 +14,7 @@ import (
 )
 
 func TestNewRouter(t *testing.T) {
-	doc := loadDoc(petstore)
+	doc := loadDocFile(t, "testdata/petstore_1.yml")
 
 	handlers := OperationHandlers{
 		"addPet": http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -92,8 +92,13 @@ func TestUse(t *testing.T) {
 }
 
 func TestServeSpec(t *testing.T) {
+	doc, err := LoadFile("testdata/petstore_1.yml")
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
 	r, err := NewRouter(
-		loadDoc(petstore),
+		doc,
 		OperationHandlers{},
 		ServeSpec(SpecHandlerTypeStatic),
 	)
@@ -105,10 +110,8 @@ func TestServeSpec(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/v2", nil)
 	r.ServeHTTP(w, req)
 
-	spec := loadDoc(w.Body.Bytes()).Spec()
-
 	var paths []string
-	for name := range spec.Paths.Paths {
+	for name := range doc.Spec().Paths.Paths {
 		paths = append(paths, name)
 	}
 	sort.Strings(paths)

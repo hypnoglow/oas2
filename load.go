@@ -53,7 +53,7 @@ func LoadCacheDir(dir string) LoadOption {
 }
 
 // LoadFile loads OpenAPI specification from file.
-func LoadFile(fpath string, opts ...LoadOption) (*loads.Document, error) {
+func LoadFile(fpath string, opts ...LoadOption) (*Document, error) {
 	options := LoadOptions{}
 	for _, opt := range opts {
 		opt(&options)
@@ -79,7 +79,7 @@ func LoadFile(fpath string, opts ...LoadOption) (*loads.Document, error) {
 		document.OrigSpec().Info.Version = options.appVersion
 	}
 
-	return document, nil
+	return wrapDocument(document), nil
 }
 
 func loadDocument(fpath, cacheDir string) (*loads.Document, error) {

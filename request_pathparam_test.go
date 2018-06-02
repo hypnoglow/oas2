@@ -10,10 +10,13 @@ import (
 )
 
 func TestPathParameterExtractor(t *testing.T) {
-	handlers := OperationHandlers{
-		"getPetById": http.HandlerFunc(handleGetPetByID),
-	}
-	router, err := NewRouter(loadDoc(petstore), handlers, Use(PathParameterExtractor(chi.URLParam)))
+	router, err := NewRouter(
+		loadDocFile(t, "testdata/petstore_1.yml"),
+		OperationHandlers{
+			"getPetById": http.HandlerFunc(handleGetPetByID),
+		},
+		Use(PathParameterExtractor(chi.URLParam)),
+	)
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}

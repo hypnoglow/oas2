@@ -20,7 +20,7 @@ func TestBodyValidator(t *testing.T) {
 	bv := BodyValidator(errHandler, ContentTypeRegexSelector(contentTypeSelectorRegexJSON))
 
 	router, err := NewRouter(
-		loadDoc(petstore),
+		loadDocFile(t, "testdata/petstore_1.yml"),
 		handlers,
 		Use(bv),
 	)

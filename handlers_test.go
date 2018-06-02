@@ -8,7 +8,7 @@ import (
 )
 
 func TestDynamicSpecHandler(t *testing.T) {
-	doc := loadDoc(petstore)
+	doc := loadDocFile(t, "testdata/petstore_1.yml")
 
 	h := DynamicSpecHandler(doc.Spec())
 
@@ -19,7 +19,7 @@ func TestDynamicSpecHandler(t *testing.T) {
 
 	h.ServeHTTP(rr, req)
 
-	writtenDoc := loadDoc(rr.Body.Bytes())
+	writtenDoc := loadDocBytes(rr.Body.Bytes())
 
 	if writtenDoc.Spec().Host != "foo.bar.com" {
 		t.Errorf("Expected host to be foo.bar.com but got %q", writtenDoc.Spec().Host)
@@ -41,7 +41,8 @@ func TestDynamicSpecHandler(t *testing.T) {
 }
 
 func TestStaticSpecHandler(t *testing.T) {
-	doc := loadDoc(petstore)
+	doc := loadDocFile(t, "testdata/petstore_1.yml")
+
 	doc.Spec().Info.Version = "1.2.3"
 	doc.Spec().Host = "foo.bar.com"
 	doc.Spec().Schemes = []string{"https"}
@@ -53,7 +54,7 @@ func TestStaticSpecHandler(t *testing.T) {
 
 	h.ServeHTTP(rr, req)
 
-	writtenDoc := loadDoc(rr.Body.Bytes())
+	writtenDoc := loadDocBytes(rr.Body.Bytes())
 
 	if writtenDoc.Spec().Info.Version != "1.2.3" {
 		t.Errorf("Expected version to be 1.2.3 but got %q", writtenDoc.Spec().Info.Version)
