@@ -56,6 +56,14 @@ jobs:
           at: /go/src/github.com/hypnoglow
       - run: ./.circleci/testcover.sh
       - run: bash <(curl -s https://codecov.io/bash)
+  "e2e":
+    docker:
+      - image: circleci/golang:1.9
+    working_directory: /go/src/github.com/hypnoglow/oas2
+    steps:
+      - attach_workspace:
+          at: /go/src/github.com/hypnoglow
+      - run: go test -tags e2e ./e2e/...
 workflows:
   version: 2
   prepare-and-test:
@@ -71,5 +79,8 @@ workflows:
           requires:
             - prepare-code
       - "codecov":
+          requires:
+            - prepare-code
+      - "e2e":
           requires:
             - prepare-code

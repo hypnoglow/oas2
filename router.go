@@ -66,28 +66,35 @@ func NewRouter(
 				continue
 			}
 
-			// Apply custom middleware before the operationIDMiddleware so
-			// they can use the OptionID.
-			for _, mwf := range router.mws {
-				handler = mwf(handler)
+			// Wrap the handler with all middleware provided by user so that
+			// middleware handlers will be executed exactly in the same order
+			// they there passed to the router.
+			for i := range router.mws {
+				handler = router.mws[len(router.mws)-1-i](handler)
 			}
 
-			// Copy operation to keep original operation unmodified.
-			op := &spec.Operation{}
-			if err := copyOperation(op, operation); err != nil {
-				return router, err
-			}
+			{
+				// This block wraps the handler with the special middleware
+				// that is always executed first and adds the operation
+				// specific to the handler into a request context.
 
-			// Add all path parameters to operation parameters
-			// so operation in request context will be self-sufficient.
-			// This is required for middlewares that use OpenAPI operation.
-			for _, pathParam := range doc.Spec().Paths.Paths[path].Parameters {
-				op.AddParam(&pathParam)
-			}
+				// Copy operation to keep original operation unmodified.
+				op := &spec.Operation{}
+				if err := copyOperation(op, operation); err != nil {
+					return router, err
+				}
 
-			// Apply middleware to inject operation into every request
-			// to make middlewares able to use it.
-			handler = newOperationMiddleware(op)(handler)
+				// Add all path parameters to operation parameters
+				// so operation in request context will be self-sufficient.
+				// This is required for middlewares that use OpenAPI operation.
+				for _, pathParam := range doc.Spec().Paths.Paths[path].Parameters {
+					op.AddParam(&pathParam)
+				}
+
+				// Apply middleware to inject operation into every request
+				// to make middlewares able to use it.
+				handler = newOperationMiddleware(op)(handler)
+			}
 
 			router.debugLog("oas: handle %s %s", method, doc.Spec().BasePath+path)
 			base.Route(method, doc.Spec().BasePath+path, handler)
@@ -129,6 +136,17 @@ func Base(br BaseRouter) RouterOption {
 }
 
 // Use returns an option that sets a middleware for router operations.
+//
+// Multiple middlewares will be executed exactly in the same order
+// they were passed to the router. For example:
+//  router, _ := oas.NewRouter(
+//      doc,
+//      handlers,
+//      oas.Use(RequestID),
+//      oas.Use(RequestLogger),
+//  )
+// Here the RequestLogger will be executed after RequestID and thus will be able
+// to use request id that RequestID middleware stored in a request context.
 func Use(mw Middleware) RouterOption {
 	return func(args *Router) {
 		args.mws = append(args.mws, mw)
