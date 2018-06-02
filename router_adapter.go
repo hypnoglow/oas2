@@ -20,7 +20,11 @@ type chiRouter struct {
 }
 
 func (r chiRouter) Route(method, pathPattern string, handler http.Handler) {
-	r.Method(method, pathPattern, handler)
+	r.Router.Method(method, pathPattern, handler)
+}
+
+func (r chiRouter) Use(middleware func(http.Handler) http.Handler) {
+	r.Router.Use(middleware)
 }
 
 func defaultBaseRouter() BaseRouter {

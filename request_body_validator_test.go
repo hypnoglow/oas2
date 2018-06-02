@@ -84,18 +84,19 @@ func TestBodyValidator(t *testing.T) {
 		}
 	})
 
-	resourceHandler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		fmt.Fprint(w, "hit no operation resource")
-	})
-	handler := BodyValidator(errHandler)(resourceHandler)
-	noopRouter := chi.NewRouter()
-	noopRouter.Handle("/resource", handler)
-
 	t.Run("request an url which handler does not provide operation context", func(t *testing.T) {
-		resp := helperPost(t, noopRouter, "/resource", bytes.NewBufferString(`{"name":"johndoe`))
-		expectedPayload := "hit no operation resource"
-		if !bytes.Equal([]byte(expectedPayload), resp) {
-			t.Fatalf("Expected response body to be\n%s\nbut got\n%s", expectedPayload, string(resp))
+		resourceHandler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			fmt.Fprint(w, "hit no operation resource")
+		})
+		var panicmsg string
+		handler := PanicRecover(BodyValidator(errHandler)(resourceHandler), &panicmsg)
+		noopRouter := chi.NewRouter()
+		noopRouter.Handle("/resource", handler)
+
+		helperPost(t, noopRouter, "/resource", bytes.NewBufferString(`{"name":"johndoe`))
+		expectedPanic := "request has no OpenAPI operation spec in its context"
+		if panicmsg != expectedPanic {
+			t.Fatalf("Expected panic %q but got %q", expectedPanic, panicmsg)
 		}
 	})
 }

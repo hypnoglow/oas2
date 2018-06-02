@@ -6,38 +6,62 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/hypnoglow/oas2"
+	"github.com/hypnoglow/oas2/e2e/testdata"
 )
 
+// TestMiddlewareExecutionOrder tests that middleware passed to the router
+// is executed in correct order.
 func TestMiddlewareExecutionOrder(t *testing.T) {
-	doc, err := oas.LoadFile("testdata/greeter.yaml")
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
+	doc := testdata.GreeterSpec(t)
 
 	handlers := oas.OperationHandlers{
-		"greet": GreetHandler{},
+		"greet": testdata.GreetHandler{},
 	}
 
-	buffer := &bytes.Buffer{}
+	t.Run("middleware passed with Use()", func(t *testing.T) {
+		buffer := &bytes.Buffer{}
+		router, err := oas.NewRouter(
+			doc,
+			handlers,
+			// We are testing that RequestIDLogger will have access to the request id
+			// in the request created by RequestID middleware.
+			oas.Use(RequestID),
+			oas.Use(RequestIDLogger(log.New(buffer, "", 0))),
+		)
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
 
-	router, err := oas.NewRouter(
-		doc,
-		handlers,
-		// We are testing that RequestIDLogger will have access to the request id
-		// in the request created by RequestID middleware.
-		oas.Use(RequestID),
-		oas.Use(RequestIDLogger(log.New(buffer, "", 0))),
-	)
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
+		testRouterMiddleware(t, router, buffer)
+	})
+
+	t.Run("middleware passed with Wrap()", func(t *testing.T) {
+		buffer := &bytes.Buffer{}
+		router, err := oas.NewRouter(
+			doc,
+			handlers,
+			// We are testing that RequestIDLogger will have access to the request id
+			// in the request created by RequestID middleware.
+			oas.Wrap(RequestID),
+			oas.Wrap(RequestIDLogger(log.New(buffer, "", 0))),
+		)
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+
+		testRouterMiddleware(t, router, buffer)
+	})
+
+}
+
+func testRouterMiddleware(t *testing.T, router oas.Router, buf *bytes.Buffer) {
+	t.Helper()
 
 	srv := httptest.NewServer(router)
 	defer srv.Close()
@@ -65,23 +89,9 @@ func TestMiddlewareExecutionOrder(t *testing.T) {
 	}
 
 	expectedLogEntry := "request with id 1234567890\n"
-	if buffer.String() != expectedLogEntry {
-		t.Fatalf("Expected log entry to be %q but got %q", expectedLogEntry, buffer.String())
+	if buf.String() != expectedLogEntry {
+		t.Fatalf("Expected log entry to be %q but got %q", expectedLogEntry, buf.String())
 	}
-}
-
-type GreetHandler struct{}
-
-func (GreetHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	var query struct {
-		Name string `oas:"name"`
-	}
-	if err := oas.DecodeQuery(req, &query); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	fmt.Fprintf(w, `{"greeting":"Hello, %s!"}`, query.Name)
 }
 
 type ctxKeyRequestID struct{}

@@ -20,7 +20,7 @@ const (
 func DecodeQuery(req *http.Request, dst interface{}) error {
 	op := GetOperation(req)
 	if op == nil {
-		return errors.New("request has no operation in its context")
+		return errors.New("request has no OpenAPI operation spec in its context")
 	}
 
 	return DecodeQueryParams(op.Parameters, req.URL.Query(), dst)

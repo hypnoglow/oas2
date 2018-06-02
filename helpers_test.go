@@ -2,12 +2,27 @@ package oas
 
 import (
 	"log"
+	"net/http"
 
 	"github.com/go-openapi/loads"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
+
+func PanicRecover(next http.Handler, expected *string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		defer func() {
+			r := recover()
+			if r == nil {
+				return
+			}
+
+			*expected = r.(string)
+		}()
+		next.ServeHTTP(w, req)
+	})
+}
 
 func loadDoc(b []byte) *loads.Document {
 	yml, err := swag.BytesToYAMLDoc(b)

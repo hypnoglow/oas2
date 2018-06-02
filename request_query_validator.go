@@ -19,11 +19,8 @@ type queryValidatorMiddleware struct {
 
 func (m queryValidatorMiddleware) chain(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		op := GetOperation(req)
-		if op == nil {
-			next.ServeHTTP(w, req)
-			return
-		}
+		// It's better to panic than to silently skip validation.
+		op := MustOperation(req)
 
 		if errs := validate.Query(op.Parameters, req.URL.Query()); len(errs) > 0 {
 			err := ValidationError{error: fmt.Errorf("validation error"), errs: errs}
