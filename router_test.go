@@ -68,7 +68,7 @@ func TestDebugLog(t *testing.T) {
 }
 
 func TestBaseRouterOpt(t *testing.T) {
-	baseRouter := defaultBaseRouter()
+	baseRouter := DefaultBaseRouter()
 	opt := Base(baseRouter)
 
 	router := &Router{}

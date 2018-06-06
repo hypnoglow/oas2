@@ -40,7 +40,7 @@ func NewRouter(
 		router.debugLog = func(format string, args ...interface{}) {}
 	}
 	if router.baseRouter == nil {
-		router.baseRouter = defaultBaseRouter()
+		router.baseRouter = DefaultBaseRouter()
 	}
 
 	// Apply router-wide middlewares
