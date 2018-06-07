@@ -5,6 +5,63 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+That's **a lot** of changes in this upcoming release :)
+
+### Added
+
+- New `oas.Wrap()` option for `oas.NewRouter()` applies a middleware that wraps
+the router. That means it executes before the actual routing, so you can modify
+its behaviour, e.g. introducing new routes (handling 404 errors) or methods (handling
+OPTIONS method for CORS). See `oas.Wrap()` [documentation](https://github.com/hypnoglow/oas2/blob/b0d734259c9ebab2bb7196b49a48e3e3c0ada79a/router.go#L141)
+for more information. Note that those middleware also applies to a spec served 
+by router, when enabled via `oas.ServeSpec()` option.
+- `DefaultBaseRouter()` got exposed for informational purposes.
+- `DefaultExtractorFunc()` was added, so users don't need to import [chi](https://github.com/go-chi/chi)
+package if they use default router. Thus, you can just `oas.Use(oas.PathParameterExtractor(oas.DefaultExtractorFunc))`
+
+### Changed
+
+- Middleware order got adjusted. Now, when you pass middleware to `oas.NewRouter()` using
+`oas.Use()` option, they get applied exactly in the same order. See `oas.Use()`
+option [documentation](https://github.com/hypnoglow/oas2/blob/b0d734259c9ebab2bb7196b49a48e3e3c0ada79a/router.go#L167)
+and [this](https://github.com/hypnoglow/oas2/blob/b0d734259c9ebab2bb7196b49a48e3e3c0ada79a/e2e/middleware_order/main_test.go#L32)
+test for an example. 
+- `oas` package now introduces wrapper types `oas.Document` and `oas.Operation`. All functions
+that previously exposed parameters from other libraries from [go-openapi](https://github.com/go-openapi)
+now use these types. 
+
+    For example, `oas.LoadFile()` now returns `*oas.Document` instead of `*loads.Document`.
+    Thus, `oas.NewRouter()` accepts `*oas.Document` instead of `*loads.Document`.
+
+    The main purpose for this change is that most users only need those types to
+    use within this library, and they had to import [go-openapi](https://github.com/go-openapi)
+    libraries just to pass variables around. Also, you still can access underlying types from [go-openapi](https://github.com/go-openapi)
+    if you need.
+    
+    Functions that had their signatures changed:
+    
+    - `oas.LoadFile()`
+    - `oas.NewRouter()`
+    - `oas.WithOperation()`
+    - `oas.GetOperation()`
+    - `oas.MustOperation()`
+     
+- Adjusted string representation of variables of type `oas.ValidationError`.
+- All package middlewares that require `oas.Operation` to work now **panic**
+if operation is not found in the request context. Previously, if middleware
+cannot find operation in request context, it would just silently skip the validation.
+That behavior is undesirable because validation is important. So, the change 
+is done to actually notify package user that he is doing something wrong. 
+
+    Affected middlewares:
+    
+    - `oas.PathParameterExtractor()`
+    - `oas.QueryValidator()`
+    - `oas.BodyValidator()`
+    - `oas.ResponseBodyValidator()`
+
 ## [0.6.1] - 2018-05-28
 
 ### Fixed
