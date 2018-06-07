@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/go-openapi/analysis"
-	"github.com/go-openapi/loads"
 	"github.com/go-openapi/spec"
 )
 
@@ -26,7 +25,7 @@ func (r Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // NewRouter returns a new Router.
 func NewRouter(
-	doc *loads.Document,
+	doc *Document,
 	handlers OperationHandlers,
 	options ...RouterOption,
 ) (Router, error) {
@@ -41,7 +40,7 @@ func NewRouter(
 		router.debugLog = func(format string, args ...interface{}) {}
 	}
 	if router.baseRouter == nil {
-		router.baseRouter = defaultBaseRouter()
+		router.baseRouter = DefaultBaseRouter()
 	}
 
 	// Apply router-wide middlewares
@@ -96,7 +95,7 @@ func NewRouter(
 
 				// Apply middleware to inject operation into every request
 				// to make middlewares able to use it.
-				handler = newOperationMiddleware(op)(handler)
+				handler = newOperationMiddleware(wrapOperation(op))(handler)
 			}
 
 			router.debugLog("oas: handle %s %s", method, doc.Spec().BasePath+path)

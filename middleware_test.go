@@ -16,11 +16,14 @@ import (
 func TestValidationError_Error(t *testing.T) {
 	ve := ValidationError{
 		error: errors.New("got validation errors"),
-		errs:  []error{fmt.Errorf("field is invalid")},
+		errs: []error{
+			fmt.Errorf("field a is invalid"),
+			fmt.Errorf("field b must be greater than 10"),
+		},
 	}
 
 	s := ve.Error()
-	expectedString := "got validation errors: - field is invalid"
+	expectedString := "got validation errors: field a is invalid, field b must be greater than 10"
 	if s != expectedString {
 		t.Errorf("Expected %q but got %q", expectedString, s)
 	}

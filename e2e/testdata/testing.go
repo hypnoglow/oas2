@@ -7,8 +7,6 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/go-openapi/loads"
-
 	"github.com/hypnoglow/oas2"
 )
 
@@ -29,7 +27,7 @@ func (GreetHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 // GreeterSpec returns an OpenAPI spec for greeter server.
-func GreeterSpec(t *testing.T) *loads.Document {
+func GreeterSpec(t *testing.T) *oas.Document {
 	t.Helper()
 
 	_, filename, _, _ := runtime.Caller(0)

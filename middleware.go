@@ -21,7 +21,8 @@ type RequestErrorHandler func(w http.ResponseWriter, req *http.Request, err erro
 // ResponseErrorHandler is a function that handles an error occurred in
 // middleware while working with response. It is the library user responsibility
 // to implement this to handle various errors that can occur on middleware work.
-// This errors can include response validation errors, ...TODO... and other.
+// This errors can include response validation errors, json serialization errors
+// and others.
 type ResponseErrorHandler func(w http.ResponseWriter, req *http.Request, err error)
 
 // JSONError occurs on json encoding or decoding.
@@ -37,15 +38,15 @@ type ValidationError struct {
 }
 
 // Error implements error.
-func (e ValidationError) Error() string {
+func (ve ValidationError) Error() string {
 	var s []string
-	for _, er := range e.errs {
-		s = append(s, fmt.Sprintf("- %s", er.Error()))
+	for _, err := range ve.errs {
+		s = append(s, err.Error())
 	}
-	return fmt.Sprintf("%s: %s", e.error.Error(), strings.Join(s, "\n"))
+	return fmt.Sprintf("%s: %s", ve.error, strings.Join(s, ", "))
 }
 
 // Errors returns validation errors.
-func (e ValidationError) Errors() []error {
-	return e.errs
+func (ve ValidationError) Errors() []error {
+	return ve.errs
 }

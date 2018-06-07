@@ -27,6 +27,12 @@ func (r chiRouter) Use(middleware func(http.Handler) http.Handler) {
 	r.Router.Use(middleware)
 }
 
-func defaultBaseRouter() BaseRouter {
+// DefaultBaseRouter is the base router used by default when no specific
+// base router passed to NewRouter().
+func DefaultBaseRouter() BaseRouter {
 	return ChiAdapter(chi.NewRouter())
 }
+
+// DefaultExtractorFunc is the extractor func that should be used with
+// default router.
+var DefaultExtractorFunc = chi.URLParam

@@ -26,7 +26,7 @@ func TestMustOperation(t *testing.T) {
 			t.Errorf("Unexpected error: %v", err)
 		}
 
-		op := &spec.Operation{OperationProps: spec.OperationProps{Description: "some"}}
+		op := wrapOperation(&spec.Operation{OperationProps: spec.OperationProps{Description: "some"}})
 		req = WithOperation(req, op)
 
 		actualOperation := MustOperation(req)

@@ -10,11 +10,14 @@ import (
 )
 
 func TestQueryValidator(t *testing.T) {
-	handlers := OperationHandlers{
-		"loginUser": http.HandlerFunc(handleUserLogin),
-	}
 	errHandler := makeErrorHandler()
-	router, err := NewRouter(loadDoc(petstore), handlers, Use(QueryValidator(errHandler)))
+	router, err := NewRouter(
+		loadDocFile(t, "testdata/petstore_1.yml"),
+		OperationHandlers{
+			"loginUser": http.HandlerFunc(handleUserLogin),
+		},
+		Use(QueryValidator(errHandler)),
+	)
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}
