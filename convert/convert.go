@@ -17,6 +17,28 @@ func Parameter(vals []string, param *spec.Parameter) (value interface{}, err err
 			return nil, fmt.Errorf("type array has no `items` field")
 		}
 
+		// Array can be represented in different ways based on
+		// collectionFormat property
+		if len(vals) != 0 {
+			switch param.SimpleSchema.CollectionFormat {
+			case "ssv":
+				// Space-separated values
+				vals = strings.Split(vals[0], " ")
+			case "tsv":
+				// Tab-separated values
+				vals = strings.Split(vals[0], "\t")
+			case "pipes":
+				// Pipe-separated values
+				vals = strings.Split(vals[0], "|")
+			case "multi":
+				// Multiple parameter instances rather than multiple values
+				// Do nothing, values are already represented as an array in vals
+			default: // "csv"
+				// Comma-separated values
+				vals = strings.Split(vals[0], ",")
+			}
+		}
+
 		return Array(vals, param.Items.Type, param.Items.Format)
 	}
 

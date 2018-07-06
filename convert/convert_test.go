@@ -21,15 +21,70 @@ func TestParameter(t *testing.T) {
 		values := []string{"Nicolas", "Jonathan"}
 		param := spec.QueryParam("names").Typed("array", "")
 		param.Items = spec.NewItems().Typed("string", "")
+		param.SimpleSchema.CollectionFormat = "multi"
 
 		v, err := Parameter(values, param)
 		assertConversionResult(t, []string{"Nicolas", "Jonathan"}, v)
 		assertConversionError(t, false, err)
 	})
 
+	t.Run("ok for space-separated array in string", func(t *testing.T) {
+		values := []string{"Peter Lois"}
+		param := spec.QueryParam("names").Typed("array", "")
+		param.Items = spec.NewItems().Typed("string", "")
+		param.SimpleSchema.CollectionFormat = "ssv"
+
+		v, err := Parameter(values, param)
+		assertConversionResult(t, []string{"Peter", "Lois"}, v)
+		assertConversionError(t, false, err)
+	})
+
+	t.Run("ok for tab-separated array in string", func(t *testing.T) {
+		values := []string{"Brian\tStewie"}
+		param := spec.QueryParam("names").Typed("array", "")
+		param.Items = spec.NewItems().Typed("string", "")
+		param.SimpleSchema.CollectionFormat = "tsv"
+
+		v, err := Parameter(values, param)
+		assertConversionResult(t, []string{"Brian", "Stewie"}, v)
+		assertConversionError(t, false, err)
+	})
+
+	t.Run("ok for pipe-separated array in string", func(t *testing.T) {
+		values := []string{"Meg|Chris"}
+		param := spec.QueryParam("names").Typed("array", "")
+		param.Items = spec.NewItems().Typed("string", "")
+		param.SimpleSchema.CollectionFormat = "pipes"
+
+		v, err := Parameter(values, param)
+		assertConversionResult(t, []string{"Meg", "Chris"}, v)
+		assertConversionError(t, false, err)
+	})
+
+	t.Run("ok for comma-separated array in string", func(t *testing.T) {
+		values := []string{"Stan,Francine"}
+		param := spec.QueryParam("names").Typed("array", "")
+		param.Items = spec.NewItems().Typed("string", "")
+		param.SimpleSchema.CollectionFormat = "csv"
+
+		v, err := Parameter(values, param)
+		assertConversionResult(t, []string{"Stan", "Francine"}, v)
+		assertConversionError(t, false, err)
+	})
+
+	t.Run("ok for comma-separated array in string as a default behavior", func(t *testing.T) {
+		values := []string{"Steve,Hayley"}
+		param := spec.QueryParam("names").Typed("array", "")
+		param.Items = spec.NewItems().Typed("string", "")
+
+		v, err := Parameter(values, param)
+		assertConversionResult(t, []string{"Steve", "Hayley"}, v)
+		assertConversionError(t, false, err)
+	})
+
 	t.Run("fail for array that has no items type", func(t *testing.T) {
-	    values := []string{"does not matter"}
-	    param := spec.QueryParam("names").Typed("array", "")
+		values := []string{"does not matter"}
+		param := spec.QueryParam("names").Typed("array", "")
 
 		v, err := Parameter(values, param)
 		assertConversionResult(t, nil, v)
@@ -37,7 +92,7 @@ func TestParameter(t *testing.T) {
 	})
 
 	t.Run("fail for file (not implemented yet)", func(t *testing.T) {
-	    values := []string{"does not matter"}
+		values := []string{"does not matter"}
 		param := spec.FormDataParam("photo").Typed("file", "")
 
 		v, err := Parameter(values, param)
@@ -46,8 +101,8 @@ func TestParameter(t *testing.T) {
 	})
 
 	t.Run("fail for multiple values on primitive type", func(t *testing.T) {
-	    values := []string{"John", "Edvard"}
-	    param := spec.QueryParam("name").Typed("string", "")
+		values := []string{"John", "Edvard"}
+		param := spec.QueryParam("name").Typed("string", "")
 
 		v, err := Parameter(values, param)
 		assertConversionResult(t, nil, v)
