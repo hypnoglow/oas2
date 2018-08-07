@@ -57,7 +57,11 @@ func NewRouter(
 		case SpecHandlerTypeStatic:
 			specHandler = StaticSpecHandler(doc.OrigSpec())
 		}
-		router.baseRouter.Route(http.MethodGet, doc.Spec().BasePath, specHandler)
+		path := doc.Spec().BasePath
+		if path == "" {
+			path = "/"
+		}
+		router.baseRouter.Route(http.MethodGet, path, specHandler)
 	}
 
 	for method, pathOps := range analysis.New(doc.Spec()).Operations() {
