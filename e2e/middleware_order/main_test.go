@@ -60,7 +60,7 @@ func TestMiddlewareExecutionOrder(t *testing.T) {
 
 }
 
-func testRouterMiddleware(t *testing.T, router oas.Router, buf *bytes.Buffer) {
+func testRouterMiddleware(t *testing.T, router *oas.Router, buf *bytes.Buffer) {
 	t.Helper()
 
 	srv := httptest.NewServer(router)

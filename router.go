@@ -19,8 +19,76 @@ type Router struct {
 }
 
 // ServeHTTP implements http.Handler.
-func (r Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	r.baseRouter.ServeHTTP(w, req)
+}
+
+// AddSpec adds routes from the spec to the router.
+func (r *Router) AddSpec(doc *Document, handlers OperationHandlers) error {
+	return r.applySpecRouting(doc, handlers)
+}
+
+func (r *Router) applySpecRouting(doc *Document, handlers OperationHandlers) error {
+	// Serve the specification itself if enabled.
+	if r.serveSpec != 0 {
+		var specHandler http.Handler
+		switch r.serveSpec {
+		case SpecHandlerTypeDynamic:
+			specHandler = DynamicSpecHandler(doc.OrigSpec())
+		case SpecHandlerTypeStatic:
+			specHandler = StaticSpecHandler(doc.OrigSpec())
+		}
+		path := doc.Spec().BasePath
+		if path == "" {
+			path = "/"
+		}
+		r.baseRouter.Route(http.MethodGet, path, specHandler)
+	}
+
+	for method, pathOps := range analysis.New(doc.Spec()).Operations() {
+		for path, operation := range pathOps {
+			handler, ok := handlers[OperationID(operation.ID)]
+			if !ok {
+				r.debugLog("oas: no handler registered for operation %s", operation.ID)
+				continue
+			}
+
+			// Wrap the handler with all middleware provided by user so that
+			// middleware handlers will be executed exactly in the same order
+			// they there passed to the router.
+			for i := range r.mws {
+				handler = r.mws[len(r.mws)-1-i](handler)
+			}
+
+			{
+				// This block wraps the handler with the special middleware
+				// that is always executed first and adds the operation
+				// specific to the handler into a request context.
+
+				// Copy operation to keep original operation unmodified.
+				op := &spec.Operation{}
+				if err := copyOperation(op, operation); err != nil {
+					return err
+				}
+
+				// Add all path parameters to operation parameters
+				// so operation in request context will be self-sufficient.
+				// This is required for middlewares that use OpenAPI operation.
+				for _, pathParam := range doc.Spec().Paths.Paths[path].Parameters {
+					op.AddParam(&pathParam)
+				}
+
+				// Apply middleware to inject operation into every request
+				// to make middlewares able to use it.
+				handler = newOperationMiddleware(wrapOperation(op))(handler)
+			}
+
+			r.debugLog("oas: handle %s %s", method, doc.Spec().BasePath+path)
+			r.baseRouter.Route(method, doc.Spec().BasePath+path, handler)
+		}
+	}
+
+	return nil
 }
 
 // NewRouter returns a new Router.
@@ -28,11 +96,11 @@ func NewRouter(
 	doc *Document,
 	handlers OperationHandlers,
 	options ...RouterOption,
-) (Router, error) {
+) (*Router, error) {
 	// Apply argument options.
-	router := Router{}
+	router := &Router{}
 	for _, o := range options {
-		o(&router)
+		o(router)
 	}
 
 	// Default options
@@ -48,66 +116,8 @@ func NewRouter(
 		router.baseRouter.Use(mw)
 	}
 
-	// Serve the specification itself if enabled.
-	if router.serveSpec != 0 {
-		var specHandler http.Handler
-		switch router.serveSpec {
-		case SpecHandlerTypeDynamic:
-			specHandler = DynamicSpecHandler(doc.OrigSpec())
-		case SpecHandlerTypeStatic:
-			specHandler = StaticSpecHandler(doc.OrigSpec())
-		}
-		path := doc.Spec().BasePath
-		if path == "" {
-			path = "/"
-		}
-		router.baseRouter.Route(http.MethodGet, path, specHandler)
-	}
-
-	for method, pathOps := range analysis.New(doc.Spec()).Operations() {
-		for path, operation := range pathOps {
-			handler, ok := handlers[OperationID(operation.ID)]
-			if !ok {
-				router.debugLog("oas: no handler registered for operation %s", operation.ID)
-				continue
-			}
-
-			// Wrap the handler with all middleware provided by user so that
-			// middleware handlers will be executed exactly in the same order
-			// they there passed to the router.
-			for i := range router.mws {
-				handler = router.mws[len(router.mws)-1-i](handler)
-			}
-
-			{
-				// This block wraps the handler with the special middleware
-				// that is always executed first and adds the operation
-				// specific to the handler into a request context.
-
-				// Copy operation to keep original operation unmodified.
-				op := &spec.Operation{}
-				if err := copyOperation(op, operation); err != nil {
-					return router, err
-				}
-
-				// Add all path parameters to operation parameters
-				// so operation in request context will be self-sufficient.
-				// This is required for middlewares that use OpenAPI operation.
-				for _, pathParam := range doc.Spec().Paths.Paths[path].Parameters {
-					op.AddParam(&pathParam)
-				}
-
-				// Apply middleware to inject operation into every request
-				// to make middlewares able to use it.
-				handler = newOperationMiddleware(wrapOperation(op))(handler)
-			}
-
-			router.debugLog("oas: handle %s %s", method, doc.Spec().BasePath+path)
-			router.baseRouter.Route(method, doc.Spec().BasePath+path, handler)
-		}
-	}
-
-	return router, nil
+	err := router.applySpecRouting(doc, handlers)
+	return router, err
 }
 
 // BaseRouter is an underlying router used in oas router.
