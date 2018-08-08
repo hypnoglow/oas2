@@ -10,7 +10,7 @@ import (
 )
 
 func hashFile(path string) (string, error) {
-	f, err := os.Open(path)
+	f, err := os.Open(path) // nolint: gosec
 	if err != nil {
 		return "", errors.Wrap(err, "open spec file")
 	}
