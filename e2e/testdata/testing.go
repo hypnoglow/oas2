@@ -23,7 +23,9 @@ func (GreetHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, `{"greeting":"Hello, %s!"}`, query.Name)
+	if _, err := fmt.Fprintf(w, `{"greeting":"Hello, %s!"}`, query.Name); err != nil {
+		panic(err)
+	}
 }
 
 // GreeterSpec returns an OpenAPI spec for greeter server.

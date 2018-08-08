@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] - 2018-08-08
+
+### Added
+
+- It is now possible to load multiple specs into a single router via `Router.AddSpec` method. ([#46](https://github.com/hypnoglow/oas2/pull/46))
+
+### Fixed
+
+- Fixed a panic on empty basePath in spec ([#45](https://github.com/hypnoglow/oas2/pull/45))
+
 ## [0.7.1] - 2018-07-09
 
 ### Fixed
