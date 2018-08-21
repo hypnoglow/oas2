@@ -23,11 +23,10 @@ func TestQueryValidatorMiddleware(t *testing.T) {
 		"greet": testdata.GreetHandler{},
 	}
 
-	router, err := oas.NewRouter(
-		doc,
-		handlers,
-		oas.Use(oas.QueryValidator(handleValidationError)),
+	router := oas.NewRouter(
+		oas.RouterMiddleware(oas.QueryValidator(handleValidationError)),
 	)
+	err := router.AddSpec(doc, handlers)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}

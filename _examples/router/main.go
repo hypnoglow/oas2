@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/go-chi/chi"
 	"github.com/sirupsen/logrus"
 
 	"github.com/hypnoglow/oas2"
@@ -33,20 +32,17 @@ func main() {
 	lg := logrus.New()
 	lg.SetLevel(logrus.DebugLevel)
 
-	// We are using chi as base router.
-	baseRouter := chi.NewRouter()
-
 	// Prepare error handler.
 	errHandler := middlewareErrorHandler(lg)
 
-	router, err := oas.NewRouter(
-		doc,
-		handlers,
-		oas.Base(oas.ChiAdapter(baseRouter)),
+	// Create the router
+	router := oas.NewRouter(
 		oas.DebugLog(lg.Debugf),
-		oas.Use(oas.QueryValidator(errHandler)),
+		oas.RouterMiddleware(oas.QueryValidator(errHandler)),
 	)
-	if err != nil {
+
+	// Setup routing by spec.
+	if err = router.AddSpec(doc, handlers); err != nil {
 		log.Fatalln(err)
 	}
 

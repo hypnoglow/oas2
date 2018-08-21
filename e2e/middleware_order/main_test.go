@@ -24,15 +24,55 @@ func TestMiddlewareExecutionOrder(t *testing.T) {
 		"greet": testdata.GreetHandler{},
 	}
 
-	t.Run("middleware passed with Use()", func(t *testing.T) {
+	t.Run("middleware passed inline with RouterMiddleware()", func(t *testing.T) {
 		buffer := &bytes.Buffer{}
-		router, err := oas.NewRouter(
-			doc,
-			handlers,
+		router := oas.NewRouter(
 			// We are testing that RequestIDLogger will have access to the request id
 			// in the request created by RequestID middleware.
-			oas.Use(RequestID),
-			oas.Use(RequestIDLogger(log.New(buffer, "", 0))),
+			oas.RouterMiddleware(
+				RequestID,
+				RequestIDLogger(log.New(buffer, "", 0)),
+			),
+		)
+		err := router.AddSpec(doc, handlers)
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+
+		testRouterMiddleware(t, router, buffer)
+	})
+
+	t.Run("middleware passed as two options with RouterMiddleware()", func(t *testing.T) {
+		buffer := &bytes.Buffer{}
+		router := oas.NewRouter(
+			// We are testing that RequestIDLogger will have access to the request id
+			// in the request created by RequestID middleware.
+			oas.RouterMiddleware(
+				RequestID,
+			),
+			oas.RouterMiddleware(
+				RequestIDLogger(log.New(buffer, "", 0)),
+			),
+		)
+		err := router.AddSpec(doc, handlers)
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+
+		testRouterMiddleware(t, router, buffer)
+	})
+
+	t.Run("middleware passed inline with SpecMiddleware()", func(t *testing.T) {
+		buffer := &bytes.Buffer{}
+		router := oas.NewRouter()
+		err := router.AddSpec(
+			doc, handlers,
+			// We are testing that RequestIDLogger will have access to the request id
+			// in the request created by RequestID middleware.
+			oas.SpecMiddleware(
+				RequestID,
+				RequestIDLogger(log.New(buffer, "", 0)),
+			),
 		)
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
@@ -41,15 +81,19 @@ func TestMiddlewareExecutionOrder(t *testing.T) {
 		testRouterMiddleware(t, router, buffer)
 	})
 
-	t.Run("middleware passed with Wrap()", func(t *testing.T) {
+	t.Run("middleware passed as two options with SpecMiddleware()", func(t *testing.T) {
 		buffer := &bytes.Buffer{}
-		router, err := oas.NewRouter(
-			doc,
-			handlers,
+		router := oas.NewRouter()
+		err := router.AddSpec(
+			doc, handlers,
 			// We are testing that RequestIDLogger will have access to the request id
 			// in the request created by RequestID middleware.
-			oas.Wrap(RequestID),
-			oas.Wrap(RequestIDLogger(log.New(buffer, "", 0))),
+			oas.SpecMiddleware(
+				RequestID,
+			),
+			oas.SpecMiddleware(
+				RequestIDLogger(log.New(buffer, "", 0)),
+			),
 		)
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
@@ -57,7 +101,6 @@ func TestMiddlewareExecutionOrder(t *testing.T) {
 
 		testRouterMiddleware(t, router, buffer)
 	})
-
 }
 
 func testRouterMiddleware(t *testing.T, router *oas.Router, buf *bytes.Buffer) {

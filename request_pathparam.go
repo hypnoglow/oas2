@@ -20,9 +20,9 @@ type pathParameterExtractor struct {
 func (m pathParameterExtractor) chain(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		// It's better to panic than to silently skip validation.
-		op := MustOperation(req)
+		params := MustParams(req)
 
-		for _, p := range op.Parameters {
+		for _, p := range params {
 			if p.In != "path" {
 				continue
 			}

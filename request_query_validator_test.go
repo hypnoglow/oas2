@@ -10,14 +10,13 @@ import (
 )
 
 func TestQueryValidator(t *testing.T) {
+	handlers := OperationHandlers{
+		"loginUser": http.HandlerFunc(handleUserLogin),
+	}
 	errHandler := makeErrorHandler()
-	router, err := NewRouter(
-		loadDocFile(t, "testdata/petstore_1.yml"),
-		OperationHandlers{
-			"loginUser": http.HandlerFunc(handleUserLogin),
-		},
-		Use(QueryValidator(errHandler)),
-	)
+
+	router := NewRouter(RouterMiddleware(QueryValidator(errHandler)))
+	err := router.AddSpec(loadDocFile(t, "testdata/petstore_1.yml"), handlers)
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}
@@ -48,7 +47,7 @@ func TestQueryValidator(t *testing.T) {
 		noopRouter.Handle("/resource", handler)
 
 		helperGet(t, noopRouter, "/resource")
-		expectedPanic := "request has no OpenAPI operation spec in its context"
+		expectedPanic := "request has no OpenAPI parameters in its context"
 		if panicmsg != expectedPanic {
 			t.Fatalf("Expected panic %q but got %q", expectedPanic, panicmsg)
 		}

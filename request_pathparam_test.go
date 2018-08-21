@@ -10,13 +10,12 @@ import (
 )
 
 func TestPathParameterExtractor(t *testing.T) {
-	router, err := NewRouter(
-		loadDocFile(t, "testdata/petstore_1.yml"),
-		OperationHandlers{
-			"getPetById": http.HandlerFunc(handleGetPetByID),
-		},
-		Use(PathParameterExtractor(DefaultExtractorFunc)),
-	)
+	handlers := OperationHandlers{
+		"getPetById": http.HandlerFunc(handleGetPetByID),
+	}
+
+	router := NewRouter(RouterMiddleware(PathParameterExtractor(DefaultExtractorFunc)))
+	err := router.AddSpec(loadDocFile(t, "testdata/petstore_1.yml"), handlers)
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}
@@ -39,7 +38,7 @@ func TestPathParameterExtractor(t *testing.T) {
 		noopRouter.Handle("/resource", handler)
 
 		helperGet(t, noopRouter, "/resource")
-		expectedPanic := "request has no OpenAPI operation spec in its context"
+		expectedPanic := "request has no OpenAPI parameters in its context"
 		if panicmsg != expectedPanic {
 			t.Fatalf("Expected panic %q but got %q", expectedPanic, panicmsg)
 		}

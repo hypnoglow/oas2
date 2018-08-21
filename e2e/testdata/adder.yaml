@@ -1,0 +1,37 @@
+swagger: "2.0"
+info:
+  version: "1.0.0"
+  title: "Adder server"
+basePath: "/api/adder"
+paths:
+  /sum:
+    get:
+      summary: "Adds two numbers"
+      operationId: "add"
+      produces:
+      - "application/json"
+      parameters:
+      - in: query
+        name: a
+        description: The first number
+        type: integer
+        required: true
+      - in: query
+        name: b
+        description: The second number
+        type: integer
+        required: true
+      responses:
+        200:
+          description: "Sum of two numbers"
+          schema:
+            type: object
+            properties:
+              sum:
+                type: integer
+            required:
+              - sum
+        400:
+          description: "Invalid input"
+        500:
+          description: "Server error"

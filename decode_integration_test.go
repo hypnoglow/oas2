@@ -20,8 +20,8 @@ func TestDecodeQueryParams(t *testing.T) {
 		"getPets": getPetsHandler{},
 	}
 
-	r, err := oas.NewRouter(doc, handlers)
-	if err != nil {
+	r := oas.NewRouter()
+	if err = r.AddSpec(doc, handlers); err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
 

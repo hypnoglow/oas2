@@ -23,7 +23,8 @@ func TestNewRouter(t *testing.T) {
 	}
 
 	// router with default base router
-	r, err := NewRouter(doc, handlers)
+	r := NewRouter()
+	err := r.AddSpec(doc, handlers)
 	if err != nil {
 		t.Fatalf("failed to create router: %v", err)
 	}
@@ -68,22 +69,22 @@ func TestDebugLog(t *testing.T) {
 }
 
 func TestBaseRouterOpt(t *testing.T) {
-	baseRouter := DefaultBaseRouter()
-	opt := Base(baseRouter)
-
+	opt := Base(DefaultBaseRouter(), DefaultPathTemplateFunc)
 	router := &Router{}
-
 	opt(router)
 
-	if !reflect.DeepEqual(router.baseRouter, baseRouter) {
-		t.Fatalf("Expected base router to be %v but got %v", baseRouter, router.baseRouter)
+	if router.baseRouter == nil {
+		t.Fatalf("Expected to have base router")
+	}
+	if router.ptf == nil {
+		t.Fatalf("Expected to have path template func")
 	}
 }
 
-func TestUse(t *testing.T) {
+func TestRouterMiddleware(t *testing.T) {
 	r := &Router{}
 	mw := QueryValidator(nil)
-	opt := Use(mw)
+	opt := RouterMiddleware(mw)
 	opt(r)
 
 	if len(r.mws) == 0 {
@@ -97,11 +98,8 @@ func TestServeSpec(t *testing.T) {
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	r, err := NewRouter(
-		doc,
-		OperationHandlers{},
-		ServeSpec(SpecHandlerTypeStatic),
-	)
+	r := NewRouter(ServeSpec(SpecHandlerTypeStatic))
+	err = r.AddSpec(doc, OperationHandlers{})
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}

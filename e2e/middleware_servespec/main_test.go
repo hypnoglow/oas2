@@ -1,3 +1,5 @@
+// +build e2e
+
 package middleware_servespec
 
 import (
@@ -22,12 +24,11 @@ func TestMiddlewareIsAppliedToServedSpec(t *testing.T) {
 		"greet": testdata.GreetHandler{},
 	}
 
-	router, err := oas.NewRouter(
-		doc,
-		handlers,
-		oas.Wrap(cors.AllowAll().Handler),
+	router := oas.NewRouter(
+		oas.RouterMiddleware(cors.AllowAll().Handler),
 		oas.ServeSpec(oas.SpecHandlerTypeDynamic),
 	)
+	err := router.AddSpec(doc, handlers)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}

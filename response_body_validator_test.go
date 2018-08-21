@@ -20,11 +20,8 @@ func TestResponseBodyValidator(t *testing.T) {
 
 	rbv := ResponseBodyValidator(errHandler, ContentTypeRegexSelector(contentTypeSelectorRegexJSON))
 
-	router, err := NewRouter(
-		loadDocFile(t, "testdata/petstore_1.yml"),
-		handlers,
-		Use(rbv),
-	)
+	router := NewRouter(RouterMiddleware(rbv))
+	err := router.AddSpec(loadDocFile(t, "testdata/petstore_1.yml"), handlers)
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}

@@ -8,8 +8,6 @@ paths:
     get:
       summary: "Returns a greeting for specific name"
       operationId: "greet"
-      consumes:
-      - "application/json"
       produces:
       - "application/json"
       parameters:

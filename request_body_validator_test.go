@@ -19,11 +19,8 @@ func TestBodyValidator(t *testing.T) {
 
 	bv := BodyValidator(errHandler, ContentTypeRegexSelector(contentTypeSelectorRegexJSON))
 
-	router, err := NewRouter(
-		loadDocFile(t, "testdata/petstore_1.yml"),
-		handlers,
-		Use(bv),
-	)
+	router := NewRouter(RouterMiddleware(bv))
+	err := router.AddSpec(loadDocFile(t, "testdata/petstore_1.yml"), handlers)
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}
@@ -94,7 +91,7 @@ func TestBodyValidator(t *testing.T) {
 		noopRouter.Handle("/resource", handler)
 
 		helperPost(t, noopRouter, "/resource", bytes.NewBufferString(`{"name":"johndoe`))
-		expectedPanic := "request has no OpenAPI operation spec in its context"
+		expectedPanic := "request has no OpenAPI parameters in its context"
 		if panicmsg != expectedPanic {
 			t.Fatalf("Expected panic %q but got %q", expectedPanic, panicmsg)
 		}

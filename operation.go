@@ -16,20 +16,7 @@ func (oid OperationID) String() string {
 // OperationHandlers maps OperationID to its handler.
 type OperationHandlers map[OperationID]http.Handler
 
-func newOperationMiddleware(op *Operation) Middleware {
-	return operationMiddleware{op}.chain
-}
-
-type operationMiddleware struct {
-	operation *Operation
-}
-
-func (m operationMiddleware) chain(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		req = WithOperation(req, m.operation)
-		next.ServeHTTP(w, req)
-	})
-}
+type contextKeyOperation struct{}
 
 // WithOperation returns request with context value defining *spec.Operation.
 func WithOperation(req *http.Request, op *Operation) *http.Request {
@@ -59,5 +46,3 @@ func MustOperation(req *http.Request) *Operation {
 
 	panic("request has no OpenAPI operation spec in its context")
 }
-
-type contextKeyOperation struct{}

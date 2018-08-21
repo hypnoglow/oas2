@@ -57,7 +57,7 @@ func (m bodyValidatorMiddleware) chain(next http.Handler) http.Handler {
 		}
 
 		// It's better to panic than to silently skip validation.
-		op := MustOperation(req)
+		params := MustParams(req)
 
 		// Read req.Body using io.TeeReader, so it can be read again
 		// in the actual request handler.
@@ -75,7 +75,7 @@ func (m bodyValidatorMiddleware) chain(next http.Handler) http.Handler {
 		}
 
 		// Validate body
-		if errs := validate.Body(op.Parameters, body); len(errs) > 0 {
+		if errs := validate.Body(params, body); len(errs) > 0 {
 			err := ValidationError{error: fmt.Errorf("validation error"), errs: errs}
 			if !m.errHandler(w, req, err) {
 				return
