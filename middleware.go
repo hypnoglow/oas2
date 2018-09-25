@@ -41,9 +41,9 @@ func WithProblemHandlerFunc(f ProblemHandlerFunc) MiddlewareOption {
 
 // WithContinueOnProblem returns a middleware option that defines if middleware
 // should continue when error occurs.
-func WithContinueOnProblem(continue_ bool) MiddlewareOption {
+func WithContinueOnProblem(contin bool) MiddlewareOption {
 	return func(opts *MiddlewareOptions) {
-		opts.continueOnProblem = continue_
+		opts.continueOnProblem = contin
 	}
 }
 

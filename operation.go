@@ -55,6 +55,8 @@ func getOperationInfo(req *http.Request) (operationInfo, bool) {
 
 // mustOperationInfo returns *spec.Operation from the request's context.
 // In case of operation not found MustOperation panics.
+//
+// nolint
 func mustOperationInfo(req *http.Request) operationInfo {
 	op, ok := getOperationInfo(req)
 	if ok {

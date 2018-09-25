@@ -124,20 +124,6 @@ func buildErrMessage(err errorItem) string {
 	return msg
 }
 
-func PanicRecover(next http.Handler, expected *string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		defer func() {
-			r := recover()
-			if r == nil {
-				return
-			}
-
-			*expected = r.(string)
-		}()
-		next.ServeHTTP(w, req)
-	})
-}
-
 func loadDocFile(t *testing.T, fpath string) *Document {
 	doc, err := LoadFile(fpath)
 	if err != nil {

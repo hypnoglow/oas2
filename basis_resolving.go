@@ -98,6 +98,44 @@ func (mw *resolvingOperationContext) ServeHTTP(w http.ResponseWriter, req *http.
 	mw.oc.ServeHTTP(w, req, oi, true)
 }
 
+// PathParamsContext returns a middleware that provides path parameters
+// as request context values. With this middleware, handlers can call
+// GetPathParam(req, "foo") to get typed value of path parameter "foo".
+func (b *ResolvingBasis) PathParamsContext(ex PathParamExtractor) Middleware {
+	return func(next http.Handler) http.Handler {
+		return &resolvingPathParamExtractor{
+			next: &pathParamExtractor{
+				next:      next,
+				extractor: ex,
+			},
+			strict: b.strict,
+		}
+	}
+}
+
+// resolvingPathParamExtractor is a middleware that resolves operation context
+// from the request and enables path parameter extractor middleware.
+type resolvingPathParamExtractor struct {
+	next *pathParamExtractor
+
+	// strict enforces validation. If false, then validation is not
+	// applied to requests without operation context.
+	strict bool
+}
+
+func (mw *resolvingPathParamExtractor) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	oi, ok := getOperationInfo(req)
+	if !ok {
+		if mw.strict {
+			panic("path params context middleware: cannot find operation info in the request context")
+		}
+		mw.next.ServeHTTP(w, req, nil, false)
+		return
+	}
+
+	mw.next.ServeHTTP(w, req, oi.params, true)
+}
+
 // QueryValidator returns a middleware that validates request query parameters.
 func (b *ResolvingBasis) QueryValidator(opts ...MiddlewareOption) Middleware {
 	options := parseMiddlewareOptions(opts...)

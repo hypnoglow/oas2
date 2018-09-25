@@ -31,9 +31,9 @@ func TestPathParamsExtractor(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			h := &pathParamsExtractor{
+			h := &pathParamExtractor{
 				next:      http.HandlerFunc(handleGetPetByID),
-				extractor: tc.extractor,
+				extractor: PathParamExtractorFunc(tc.extractor),
 			}
 
 			req := httptest.NewRequest(http.MethodGet, tc.url, nil)

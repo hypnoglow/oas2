@@ -1,7 +1,6 @@
 package oas
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -30,7 +29,7 @@ func (me multiError) Error() string {
 	for _, err := range me.errs {
 		ss = append(ss, err.Error())
 	}
-	s := fmt.Sprintf("%s", strings.Join(ss, ", "))
+	s := strings.Join(ss, ", ")
 	if me.msg != "" {
 		s = me.msg + ": " + s
 	}

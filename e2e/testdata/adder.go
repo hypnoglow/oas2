@@ -32,6 +32,7 @@ func (AddHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// TestAdder tests adder server.
 func TestAdder(t *testing.T, srv *httptest.Server) {
 	t.Helper()
 

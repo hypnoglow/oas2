@@ -9,6 +9,20 @@ import (
 	"github.com/hypnoglow/oas2/convert"
 )
 
+// PathParamExtractorFunc is a function that extracts path parameters by key
+// from the request.
+type PathParamExtractorFunc func(req *http.Request, key string) string
+
+// PathParam implements PathParamExtractor.
+func (f PathParamExtractorFunc) PathParam(req *http.Request, key string) string {
+	return f(req, key)
+}
+
+// PathParamExtractor can extract path parameters by key from the request.
+type PathParamExtractor interface {
+	PathParam(req *http.Request, key string) string
+}
+
 // GetPathParam returns a path parameter by name from a request.
 // For example, a handler defined on a path "/pet/{id}" gets a request with
 // path "/pet/12" - in this case GetPathParam(req, "id") returns 12.
@@ -24,16 +38,16 @@ func WithPathParam(req *http.Request, name string, value interface{}) *http.Requ
 
 type contextKeyPathParam string
 
-// pathParamsExtractor is a middleware that extracts parameters
+// pathParamExtractor is a middleware that extracts parameters
 // defined in OpenAPI 2.0 spec as path parameters from path and adds
 // them to the request context.
-type pathParamsExtractor struct {
+type pathParamExtractor struct {
 	next http.Handler
 
-	extractor func(req *http.Request, key string) string
+	extractor PathParamExtractor
 }
 
-func (mw *pathParamsExtractor) ServeHTTP(w http.ResponseWriter, req *http.Request, params []spec.Parameter, ok bool) {
+func (mw *pathParamExtractor) ServeHTTP(w http.ResponseWriter, req *http.Request, params []spec.Parameter, ok bool) {
 	if !ok {
 		mw.next.ServeHTTP(w, req)
 		return
@@ -44,7 +58,7 @@ func (mw *pathParamsExtractor) ServeHTTP(w http.ResponseWriter, req *http.Reques
 			continue
 		}
 
-		value, err := convert.Primitive(mw.extractor(req, p.Name), p.Type, p.Format)
+		value, err := convert.Primitive(mw.extractor.PathParam(req, p.Name), p.Type, p.Format)
 		if err == nil {
 			req = WithPathParam(req, p.Name, value)
 		}

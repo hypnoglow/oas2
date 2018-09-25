@@ -29,26 +29,39 @@ type OperationRouter struct {
 	onMissingOperationHandler func(op string)
 }
 
+// WithDocument sets the OpenAPI specification to build routes on.
+// It returns the router for convenient chaining.
 func (r *OperationRouter) WithDocument(doc *oas.Document) oas.OperationRouter {
 	r.doc = doc
 	return r
 }
 
+// WithMiddleware sets the middleware to build routing with.
+// It returns the router for convenient chaining.
 func (r *OperationRouter) WithMiddleware(mws ...oas.Middleware) oas.OperationRouter {
 	r.mws = append(r.mws, mws...)
 	return r
 }
 
+// WithOperationHandlers sets operation handlers to build routing with.
+// It returns the router for convenient chaining.
 func (r *OperationRouter) WithOperationHandlers(hh map[string]http.Handler) oas.OperationRouter {
 	r.handlers = hh
 	return r
 }
 
+// WithMissingOperationHandlerFunc sets the function that will be called
+// for each operation that is present in the spec but missing from operation
+// handlers. This is completely optional. You can use this method for example
+// to simply log a warning or to throw a panic and stop route building.
+// This method returns the router for convenient chaining.
 func (r *OperationRouter) WithMissingOperationHandlerFunc(fn func(string)) oas.OperationRouter {
 	r.onMissingOperationHandler = fn
 	return r
 }
 
+// Route builds routing based on the previously provided specification,
+// operation handlers, and other options.
 func (r *OperationRouter) Route() error {
 	if r.doc == nil {
 		return fmt.Errorf("no doc is given")

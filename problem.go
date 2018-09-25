@@ -65,14 +65,14 @@ func newProblemHandlerErrorResponder() ProblemHandlerFunc {
 	return func(p Problem) {
 		p.ResponseWriter().Header().Set("Content-Type", "text/plain; charset=utf-8")
 		p.ResponseWriter().WriteHeader(http.StatusBadRequest)
-		p.ResponseWriter().Write([]byte(p.err.Error()))
+		p.ResponseWriter().Write([]byte(p.err.Error())) // nolint
 	}
 }
 
 // newProblemHandlerWarnLogger is a very simple ProblemHandler that writes
 // problem error to the standard logger with a warning prefix.
-func newProblemHandlerWarnLogger(type_ string) ProblemHandlerFunc {
+func newProblemHandlerWarnLogger(kind string) ProblemHandlerFunc {
 	return func(p Problem) {
-		log.Printf("[WARN] oas %s problem on \"%s %s\": %v", type_, p.Request().Method, p.Request().URL.String(), p.Cause())
+		log.Printf("[WARN] oas %s problem on \"%s %s\": %v", kind, p.Request().Method, p.Request().URL.String(), p.Cause())
 	}
 }

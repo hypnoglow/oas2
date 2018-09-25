@@ -21,7 +21,7 @@ func matchMediaType(mediaType string, allowed []string) bool {
 	}
 
 	for _, a := range allowed {
-		if a == "*/*" {
+		if a == mediaTypeWildcard {
 			return true
 		}
 		if mediaType == a {
@@ -46,11 +46,11 @@ func matchMediaTypes(mediaTypes []string, allowed []string) bool {
 	}
 
 	for _, mediaType := range mediaTypes {
-		if mediaType == "*/*" {
+		if mediaType == mediaTypeWildcard {
 			return true
 		}
 		for _, a := range allowed {
-			if a == "*/*" {
+			if a == mediaTypeWildcard {
 				return true
 			}
 			if a == mediaType {

@@ -31,6 +31,7 @@ func (GreetHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// TestGreeter tests greeter server.
 func TestGreeter(t *testing.T, srv *httptest.Server) {
 	t.Helper()
 
