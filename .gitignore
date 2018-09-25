@@ -1,4 +1,6 @@
-tmp/
+/_tmp/
+/vendor/
 
 coverage.txt
 profile.out
+

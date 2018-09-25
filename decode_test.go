@@ -29,9 +29,8 @@ func ExampleDecodeQueryParams() {
 	}
 
 	var m member
-	if err := DecodeQueryParams(params, query, &m); err != nil {
-		panic(err)
-	}
+	err := DecodeQueryParams(params, query, &m)
+	assertNoError(err)
 
 	fmt.Printf("%#v", m)
 

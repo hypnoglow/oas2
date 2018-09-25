@@ -1,10 +1,14 @@
 package oas
 
 import (
+	"crypto/sha512"
+	"encoding/hex"
 	"encoding/json"
+	"io"
 	"os"
 	"path/filepath"
 
+	"github.com/go-openapi/analysis"
 	"github.com/go-openapi/loads"
 	"github.com/go-openapi/spec"
 	"github.com/go-openapi/strfmt"
@@ -95,8 +99,7 @@ func loadDocument(fpath, cacheDir string) (*loads.Document, error) {
 
 	if exp, err := loadExpandedFromCache(cacheDir, hashSum); err == nil {
 		// When document loaded from cache, it is safe to use exp.Raw()
-		doc, e := loads.Embedded(document.Raw(), exp.Raw())
-		return doc, errors.Wrap(e, "create embedded document")
+		return embeddedAnalyzed(document.Raw(), exp.Raw())
 	}
 
 	// If cannot load from cache for some reason - expand original spec.
@@ -124,8 +127,16 @@ func loadDocument(fpath, cacheDir string) (*loads.Document, error) {
 		return nil, errors.Wrap(err, "convert expanded spec to raw")
 	}
 
-	doc, err := loads.Embedded(document.Raw(), json.RawMessage(expBytes))
-	return doc, errors.Wrap(err, "create embedded document")
+	return embeddedAnalyzed(document.Raw(), json.RawMessage(expBytes))
+}
+
+func embeddedAnalyzed(orig, flat json.RawMessage) (*loads.Document, error) {
+	doc, err := loads.Embedded(orig, flat)
+	if err != nil {
+		return nil, errors.Wrap(err, "create embedded document")
+	}
+	doc.Analyzer = analysis.New(doc.Spec())
+	return doc, nil
 }
 
 // loadExpandedFromCache loads OpenAPI document from cache if cacheDir is not empty.
@@ -161,4 +172,19 @@ func saveExpandedToCache(expandedDoc *loads.Document, cacheDir, fpath string) er
 		return errors.Wrap(err, "write cache file")
 	}
 	return nil
+}
+
+func hashFile(path string) (string, error) {
+	f, err := os.Open(path) // nolint: gosec
+	if err != nil {
+		return "", errors.Wrap(err, "open spec file")
+	}
+	defer f.Close()
+
+	h := sha512.New512_256()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", errors.Wrap(err, "copy file to hash")
+	}
+
+	return hex.EncodeToString(h.Sum(nil)), nil
 }

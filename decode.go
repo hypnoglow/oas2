@@ -18,12 +18,12 @@ const (
 
 // DecodeQuery decodes all query params by request operation spec to the dst.
 func DecodeQuery(req *http.Request, dst interface{}) error {
-	op := GetOperation(req)
-	if op == nil {
-		return errors.New("request has no OpenAPI operation spec in its context")
+	oi, ok := getOperationInfo(req)
+	if ok {
+		return DecodeQueryParams(oi.params, req.URL.Query(), dst)
 	}
 
-	return DecodeQueryParams(op.Parameters, req.URL.Query(), dst)
+	return errors.New("decode query: cannot find OpenAPI operation info in the request context")
 }
 
 // DecodeQueryParams decodes query parameters by their spec to the dst.

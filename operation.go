@@ -3,61 +3,63 @@ package oas
 import (
 	"context"
 	"net/http"
+
+	"github.com/go-openapi/spec"
 )
 
-// OperationID is an operation identifier.
-type OperationID string
+type operationInfo struct {
+	operation *spec.Operation
 
-// String implements fmt.Stringer interface.
-func (oid OperationID) String() string {
-	return string(oid)
+	// params include all applicable operation params, even those defined
+	// on the path operation belongs to.
+	params []spec.Parameter
+
+	// consumes is either operation-defined "consumes" property or spec-wide
+	// "consumes" property.
+	consumes []string
+
+	// produces is either operation-defined "produces" property or spec-wide
+	// "produces" property.
+	produces []string
 }
 
-// OperationHandlers maps OperationID to its handler.
-type OperationHandlers map[OperationID]http.Handler
-
-func newOperationMiddleware(op *Operation) Middleware {
-	return operationMiddleware{op}.chain
+// operationContext is a middleware that adds operation info to the request
+// context and calls next.
+type operationContext struct {
+	next http.Handler
 }
 
-type operationMiddleware struct {
-	operation *Operation
+func (mw *operationContext) ServeHTTP(w http.ResponseWriter, req *http.Request, oi operationInfo, ok bool) {
+	if ok {
+		req = withOperationInfo(req, oi)
+	}
+
+	mw.next.ServeHTTP(w, req)
 }
 
-func (m operationMiddleware) chain(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		req = WithOperation(req, m.operation)
-		next.ServeHTTP(w, req)
-	})
-}
+type contextKeyOperationInfo struct{}
 
-// WithOperation returns request with context value defining *spec.Operation.
-func WithOperation(req *http.Request, op *Operation) *http.Request {
+// withOperationInfo returns request with context value defining *spec.Operation.
+func withOperationInfo(req *http.Request, info operationInfo) *http.Request {
 	return req.WithContext(
-		context.WithValue(req.Context(), contextKeyOperation{}, op),
+		context.WithValue(req.Context(), contextKeyOperationInfo{}, info),
 	)
 }
 
-// GetOperation returns *spec.Operation from the request's context.
+// getOperationInfo returns *spec.Operation from the request's context.
 // In case of operation not found GetOperation returns nil.
-func GetOperation(req *http.Request) *Operation {
-	op, ok := req.Context().Value(contextKeyOperation{}).(*Operation)
-	if ok {
-		return op
-	}
-
-	return nil
+func getOperationInfo(req *http.Request) (operationInfo, bool) {
+	op, ok := req.Context().Value(contextKeyOperationInfo{}).(operationInfo)
+	return op, ok
 }
 
-// MustOperation returns *spec.Operation from the request's context.
+// mustOperationInfo returns *spec.Operation from the request's context.
 // In case of operation not found MustOperation panics.
-func MustOperation(req *http.Request) *Operation {
-	op := GetOperation(req)
-	if op != nil {
+func mustOperationInfo(req *http.Request) operationInfo {
+	op, ok := getOperationInfo(req)
+	if ok {
 		return op
 	}
 
 	panic("request has no OpenAPI operation spec in its context")
 }
-
-type contextKeyOperation struct{}

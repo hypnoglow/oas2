@@ -10,7 +10,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/hypnoglow/oas2"
+	"github.com/hypnoglow/oas2/adapter/gorilla"
 	"github.com/hypnoglow/oas2/e2e/testdata"
 )
 
@@ -18,21 +22,24 @@ import (
 // middleware will validate query.
 func TestQueryValidatorMiddleware(t *testing.T) {
 	doc := testdata.GreeterSpec(t)
+	basis := oas.NewResolvingBasis(doc, gorilla.NewResolver(doc))
 
-	handlers := oas.OperationHandlers{
-		"greet": testdata.GreetHandler{},
-	}
+	r := mux.NewRouter()
+	err := gorilla.NewOperationRouter(r).
+		WithDocument(doc).
+		WithOperationHandlers(map[string]http.Handler{
+			"greet": testdata.GreetHandler{},
+		}).
+		WithMiddleware(
+			basis.OperationContext(),
+			basis.QueryValidator(
+				oas.WithProblemHandler(oas.ProblemHandlerFunc(handleValidationError)),
+			),
+		).
+		Route()
+	assert.NoError(t, err)
 
-	router, err := oas.NewRouter(
-		doc,
-		handlers,
-		oas.Use(oas.QueryValidator(handleValidationError)),
-	)
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
-
-	srv := httptest.NewServer(router)
+	srv := httptest.NewServer(r)
 	defer srv.Close()
 
 	// We expect to get 400 error on empty name.
@@ -55,8 +62,7 @@ func TestQueryValidatorMiddleware(t *testing.T) {
 	}
 }
 
-func handleValidationError(w http.ResponseWriter, req *http.Request, err error) (resume bool) {
-	w.WriteHeader(http.StatusBadRequest)
-	io.WriteString(w, err.Error())
-	return false
+func handleValidationError(p oas.Problem) {
+	p.ResponseWriter().WriteHeader(http.StatusBadRequest)
+	io.WriteString(p.ResponseWriter(), p.Cause().Error())
 }
