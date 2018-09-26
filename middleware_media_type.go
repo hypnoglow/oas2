@@ -3,6 +3,7 @@ package oas
 import (
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 // matchMediaType checks if media type matches any allowed media type.
@@ -24,7 +25,7 @@ func matchMediaType(mediaType string, allowed []string) bool {
 		if a == mediaTypeWildcard {
 			return true
 		}
-		if mediaType == a {
+		if strings.EqualFold(mediaType, a) {
 			return true
 		}
 	}
@@ -53,7 +54,7 @@ func matchMediaTypes(mediaTypes []string, allowed []string) bool {
 			if a == mediaTypeWildcard {
 				return true
 			}
-			if a == mediaType {
+			if strings.EqualFold(a, mediaType) {
 				return true
 			}
 		}
@@ -75,7 +76,8 @@ func (mw *requestContentTypeValidator) ServeHTTP(w http.ResponseWriter, req *htt
 	}
 
 	if req.ContentLength > 0 {
-		if !matchMediaType(req.Header.Get("Content-Type"), consumes) {
+		ct := req.Header.Get("Content-Type")
+		if !matchMediaType(ct, consumes) {
 			w.WriteHeader(http.StatusUnsupportedMediaType)
 			return
 		}

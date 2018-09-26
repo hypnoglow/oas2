@@ -12,6 +12,6 @@ const (
 )
 
 func init() {
-	contentTypeSelectorRegexJSON = regexp.MustCompile(`^application\/json`)
-	contentTypeSelectorRegexJSONAPI = regexp.MustCompile(`^application\/vnd\.api\+json$`)
+	contentTypeSelectorRegexJSON = regexp.MustCompile(`(?i)^application\/json`)
+	contentTypeSelectorRegexJSONAPI = regexp.MustCompile(`(?i)^application\/vnd\.api\+json$`)
 }
