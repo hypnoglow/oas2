@@ -1,4 +1,4 @@
-package gorilla
+package oas_gorilla
 
 import (
 	"net/http"

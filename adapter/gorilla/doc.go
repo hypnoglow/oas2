@@ -1,5 +1,3 @@
-// Package gorilla provides specific implementations of oas components using
+// Package oas_gorilla provides specific implementations of oas components using
 // gorilla/mux router.
-//
-// TODO: package name??? oas_gorilla?
-package gorilla
+package oas_gorilla

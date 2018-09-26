@@ -24,13 +24,13 @@ import (
 // is executed in correct order.
 func TestMiddlewareExecutionOrder(t *testing.T) {
 	doc := testdata.GreeterSpec(t)
-	basis := oas.NewResolvingBasis(doc, gorilla.NewResolver(doc))
+	basis := oas.NewResolvingBasis(doc, oas_gorilla.NewResolver(doc))
 
 	t.Run("middleware passed inline with RouterMiddleware()", func(t *testing.T) {
 		buffer := &bytes.Buffer{}
 
 		r := mux.NewRouter()
-		err := gorilla.NewOperationRouter(r).
+		err := oas_gorilla.NewOperationRouter(r).
 			WithDocument(doc).
 			WithOperationHandlers(map[string]http.Handler{
 				"greet": testdata.GreetHandler{},
@@ -51,7 +51,7 @@ func TestMiddlewareExecutionOrder(t *testing.T) {
 		buffer := &bytes.Buffer{}
 
 		r := mux.NewRouter()
-		err := gorilla.NewOperationRouter(r).
+		err := oas_gorilla.NewOperationRouter(r).
 			WithDocument(doc).
 			WithOperationHandlers(map[string]http.Handler{
 				"greet": testdata.GreetHandler{},

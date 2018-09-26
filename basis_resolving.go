@@ -15,7 +15,7 @@ func NewResolvingBasis(doc *Document, resolver Resolver) *ResolvingBasis {
 	b := &ResolvingBasis{
 		doc:      doc,
 		resolver: resolver,
-		strict:   false,
+		strict:   true,
 	}
 
 	b.initCache()

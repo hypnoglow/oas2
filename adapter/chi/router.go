@@ -1,25 +1,23 @@
-package oas_gorilla
+package oas_chi
 
 import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi"
 
 	"github.com/hypnoglow/oas2"
 )
 
-// NewOperationRouter returns a new operation router based on gorilla/mux
-// router.
-func NewOperationRouter(r *mux.Router) oas.OperationRouter {
+// NewOperationRouter returns a new operation router based on chi router.
+func NewOperationRouter(r chi.Router) oas.OperationRouter {
 	return &OperationRouter{
 		router: r,
 	}
 }
 
-// OperationRouter is an operation router based on gorilla/mux router.
 type OperationRouter struct {
-	router *mux.Router
+	router chi.Router
 
 	doc      *oas.Document
 	mws      []oas.Middleware
@@ -71,15 +69,14 @@ func (r *OperationRouter) Route() error {
 		return fmt.Errorf("no operation handlers given")
 	}
 
-	router := r.router.
-		PathPrefix(r.doc.BasePath()).
-		Subrouter()
+	var router chi.Router = chi.NewRouter()
 
-	mws := make([]mux.MiddlewareFunc, len(r.mws))
+	mws := make([]func(http.Handler) http.Handler, len(r.mws))
 	for i, mw := range r.mws {
-		mws[i] = mux.MiddlewareFunc(mw)
+		mws[i] = mw
 	}
-	router.Use(mws...)
+
+	router = router.With(mws...)
 
 	for method, pathOps := range r.doc.Analyzer.Operations() {
 		for path, operation := range pathOps {
@@ -91,9 +88,15 @@ func (r *OperationRouter) Route() error {
 				continue
 			}
 
-			router.Path(path).Methods(method).Handler(h)
+			router.Method(method, path, h)
 		}
 	}
+
+	if len(router.Routes()) == 0 {
+		return nil
+	}
+
+	r.router.Mount(r.doc.BasePath(), router)
 
 	return nil
 }

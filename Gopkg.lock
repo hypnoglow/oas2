@@ -42,6 +42,14 @@
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:b9914f85d95a0968bafd1be1908ba29e2eafafd88d6fd13696be42bf5368c380"
+  name = "github.com/go-chi/chi"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "b5294d10673813fac8558e7f47242bc9e61b4c25"
+  version = "v3.3.3"
+
+[[projects]]
   digest = "1:50d6bc4aa3e70803230bb98a4b0e0f1331fefc2eb324e087adf7e986b8da082e"
   name = "github.com/go-openapi/analysis"
   packages = [
@@ -243,6 +251,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/ghodss/yaml",
+    "github.com/go-chi/chi",
     "github.com/go-openapi/analysis",
     "github.com/go-openapi/errors",
     "github.com/go-openapi/loads",

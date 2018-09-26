@@ -28,7 +28,7 @@ func main() {
 
 func api(doc *oas.Document) http.Handler {
 	// Create basis that provides middlewares.
-	basis := oas.NewResolvingBasis(doc, gorilla.NewResolver(doc))
+	basis := oas.NewResolvingBasis(doc, oas_gorilla.NewResolver(doc))
 
 	srv := app.NewServer()
 
@@ -40,7 +40,7 @@ func api(doc *oas.Document) http.Handler {
 	router := mux.NewRouter()
 
 	// Build routing for the API using operation router.
-	err := gorilla.NewOperationRouter(router).
+	err := oas_gorilla.NewOperationRouter(router).
 		WithDocument(doc).
 		WithOperationHandlers(map[string]http.Handler{
 			"getSum":  http.HandlerFunc(srv.GetSum),

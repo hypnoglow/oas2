@@ -22,10 +22,10 @@ import (
 // middleware will validate query.
 func TestQueryValidatorMiddleware(t *testing.T) {
 	doc := testdata.GreeterSpec(t)
-	basis := oas.NewResolvingBasis(doc, gorilla.NewResolver(doc))
+	basis := oas.NewResolvingBasis(doc, oas_gorilla.NewResolver(doc))
 
 	r := mux.NewRouter()
-	err := gorilla.NewOperationRouter(r).
+	err := oas_gorilla.NewOperationRouter(r).
 		WithDocument(doc).
 		WithOperationHandlers(map[string]http.Handler{
 			"greet": testdata.GreetHandler{},
