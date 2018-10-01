@@ -6,12 +6,17 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/hypnoglow/oas2"
+	"github.com/hypnoglow/oas2/adapter/gorilla"
 	"github.com/hypnoglow/oas2/e2e/testdata"
 )
 
@@ -19,48 +24,51 @@ import (
 // is executed in correct order.
 func TestMiddlewareExecutionOrder(t *testing.T) {
 	doc := testdata.GreeterSpec(t)
+	basis := oas.NewResolvingBasis(doc, oas_gorilla.NewResolver(doc))
 
-	handlers := oas.OperationHandlers{
-		"greet": testdata.GreetHandler{},
-	}
-
-	t.Run("middleware passed with Use()", func(t *testing.T) {
+	t.Run("middleware passed inline with RouterMiddleware()", func(t *testing.T) {
 		buffer := &bytes.Buffer{}
-		router, err := oas.NewRouter(
-			doc,
-			handlers,
-			// We are testing that RequestIDLogger will have access to the request id
-			// in the request created by RequestID middleware.
-			oas.Use(RequestID),
-			oas.Use(RequestIDLogger(log.New(buffer, "", 0))),
-		)
-		if err != nil {
-			t.Fatalf("Unexpected error: %v", err)
-		}
 
-		testRouterMiddleware(t, router, buffer)
+		r := mux.NewRouter()
+		err := oas_gorilla.NewOperationRouter(r).
+			WithDocument(doc).
+			WithOperationHandlers(map[string]http.Handler{
+				"greet": testdata.GreetHandler{},
+			}).
+			WithMiddleware(
+				basis.OperationContext(),
+				// We are testing that RequestIDLogger will have access to the request id
+				// in the request created by RequestID middleware.
+				RequestID,
+				RequestIDLogger(log.New(buffer, "", 0)),
+			).Route()
+		assert.NoError(t, err)
+
+		testRouterMiddleware(t, r, buffer)
 	})
 
-	t.Run("middleware passed with Wrap()", func(t *testing.T) {
+	t.Run("middleware passed as two options with RouterMiddleware()", func(t *testing.T) {
 		buffer := &bytes.Buffer{}
-		router, err := oas.NewRouter(
-			doc,
-			handlers,
+
+		r := mux.NewRouter()
+		err := oas_gorilla.NewOperationRouter(r).
+			WithDocument(doc).
+			WithOperationHandlers(map[string]http.Handler{
+				"greet": testdata.GreetHandler{},
+			}).
+			WithMiddleware(basis.OperationContext()).
 			// We are testing that RequestIDLogger will have access to the request id
 			// in the request created by RequestID middleware.
-			oas.Wrap(RequestID),
-			oas.Wrap(RequestIDLogger(log.New(buffer, "", 0))),
-		)
-		if err != nil {
-			t.Fatalf("Unexpected error: %v", err)
-		}
+			WithMiddleware(RequestID).
+			WithMiddleware(RequestIDLogger(log.New(buffer, "", 0))).
+			Route()
+		assert.NoError(t, err)
 
-		testRouterMiddleware(t, router, buffer)
+		testRouterMiddleware(t, r, buffer)
 	})
-
 }
 
-func testRouterMiddleware(t *testing.T, router *oas.Router, buf *bytes.Buffer) {
+func testRouterMiddleware(t *testing.T, router *mux.Router, buf *bytes.Buffer) {
 	t.Helper()
 
 	srv := httptest.NewServer(router)
@@ -72,14 +80,16 @@ func testRouterMiddleware(t *testing.T, router *oas.Router, buf *bytes.Buffer) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("Unexpected response status: %s", resp.Status)
-	}
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	b, err := ioutil.ReadAll(resp.Body)
+	assert.NoError(t, err)
 
 	var reply struct {
 		Greeting string `json:"greeting"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&reply); err != nil {
+
+	if err := json.Unmarshal(b, &reply); err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
 

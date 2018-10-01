@@ -1,0 +1,67 @@
+swagger: "2.0"
+info:
+  version: "1.0.0"
+  title: "Adder server"
+basePath: "/api/v1"
+paths:
+  /sum:
+    get:
+      summary: "Returns the sum accumulated on the server"
+      operationId: "getSum"
+      produces:
+      - "application/json; charset=utf-8"
+      parameters:
+      - in: query
+        name: count
+        description: Add the count of sum operations to the response.
+        type: boolean
+        required: false
+        default: false
+      responses:
+        200:
+          description: "The accumulated sum"
+          schema:
+            type: object
+            properties:
+              sum:
+                type: integer
+              count:
+                type: integer
+            required:
+              - sum
+        400:
+          description: "Bad Request"
+        500:
+          description: "Server Error"
+    post:
+      summary: "Add a number to the sum accumulated on the server"
+      operationId: "postSum"
+      consumes:
+        - "application/json; charset=utf-8"
+      produces:
+        - "application/json; charset=utf-8"
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            properties:
+              number:
+                type: integer
+            required:
+              - number
+          required: true
+      responses:
+        200:
+          description: "The sum after adding the number to the accumulated value"
+          schema:
+            type: object
+            properties:
+              sum:
+                type: integer
+            required:
+              - sum
+        400:
+          description: "Bad Request"
+        500:
+          description: "Server Error"

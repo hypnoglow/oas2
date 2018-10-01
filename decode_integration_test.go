@@ -7,52 +7,39 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/hypnoglow/oas2"
 )
 
 func TestDecodeQueryParams(t *testing.T) {
 	doc, err := oas.LoadFile(getSpecPath(t))
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
+	assert.NoError(t, err)
 
-	handlers := oas.OperationHandlers{
-		"getPets": getPetsHandler{},
-	}
+	basis := oas.NewResolvingBasis(doc, fakeResolver{})
+	h := basis.OperationContext()(getPetsHandler{})
 
-	r, err := oas.NewRouter(doc, handlers)
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
-
-	srv := httptest.NewServer(r)
-
-	u := srv.URL + "/api/pets"
-	resp, err := http.Get(u)
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/api/pets", nil)
+	h.ServeHTTP(w, req)
 
 	var result struct {
 		Limit int64 `json:"limit"`
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("Expected response status code to be 200 but got %v", resp.StatusCode)
-		if b, err := ioutil.ReadAll(resp.Body); err == nil {
-			t.Errorf("Response body: %v", string(b))
-		}
-		t.Fatalf("Request test failed")
-	}
+	assert.Equal(t, http.StatusOK, w.Code)
 
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	if err = json.NewDecoder(w.Body).Decode(&result); err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	if result.Limit != 10 {
-		t.Fatalf("Expected limit to be 10 but got %v", result.Limit)
-	}
+	assert.EqualValues(t, 10, result.Limit)
+}
+
+type fakeResolver struct{}
+
+func (fakeResolver) Resolve(req *http.Request) (string, bool) {
+	return "getPets", true
 }
 
 type getPetsHandler struct{}
