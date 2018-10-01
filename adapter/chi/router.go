@@ -16,6 +16,7 @@ func NewOperationRouter(r chi.Router) oas.OperationRouter {
 	}
 }
 
+// OperationRouter is an operation router based on chi router.
 type OperationRouter struct {
 	router chi.Router
 

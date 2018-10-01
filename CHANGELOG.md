@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-TODO: Describe epic changes.
+TODO: Describe changes.
 
 ## [0.7.2] - 2018-08-08
 

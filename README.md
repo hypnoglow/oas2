@@ -47,8 +47,6 @@ Let's dive into a simple example.
 
 Given a spec: [petstore.yaml](_examples/petstore.yaml)
 
-TODO!!!!
-
 First of all, load your spec in your app (note that though package import path ends in `oas2`, the package namespace is actually `oas`):
 
 ```go
