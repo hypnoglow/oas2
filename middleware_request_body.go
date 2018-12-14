@@ -2,7 +2,7 @@ package oas
 
 import (
 	"bytes"
-	"encoding/json"
+	//"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -10,6 +10,7 @@ import (
 	"regexp"
 
 	"github.com/go-openapi/spec"
+	"github.com/json-iterator/go"
 
 	"github.com/hypnoglow/oas2/validate"
 )
@@ -95,8 +96,15 @@ func bodyPayload(req *http.Request) (interface{}, error) {
 	tr := io.TeeReader(req.Body, buf)
 	defer req.Body.Close()
 
+	// OK
+	b, err := ioutil.ReadAll(tr)
+	if err != nil {
+		return nil, err
+	}
+
 	var payload interface{}
-	if err := json.NewDecoder(tr).Decode(&payload); err != nil {
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	if err := json.Unmarshal(b, &payload); err != nil {
 		return nil, err
 	}
 

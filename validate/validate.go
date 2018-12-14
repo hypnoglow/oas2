@@ -14,9 +14,13 @@
 package validate
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"net/url"
+	"os"
 	"strings"
+	"sync"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/spec"
@@ -132,8 +136,64 @@ func validateQueryParam(p spec.Parameter, q url.Values) (errs ValidationErrors) 
 	return errs
 }
 
+var (
+	cache = make(map[string]*validate.SchemaValidator)
+	mx    = &sync.Mutex{}
+)
+
+func set(p spec.Parameter, validator *validate.SchemaValidator) {
+	var buf bytes.Buffer
+	err := gob.NewEncoder(&buf).Encode(p)
+	if err != nil {
+		return
+	}
+
+	mx.Lock()
+	defer mx.Unlock()
+
+	cache[buf.String()] = validator
+}
+
+func get(p spec.Parameter) (*validate.SchemaValidator, bool) {
+	var buf bytes.Buffer
+	err := gob.NewEncoder(&buf).Encode(p)
+	if err != nil {
+		return nil, false
+	}
+
+	mx.Lock()
+	defer mx.Unlock()
+
+	validator, ok := cache[buf.String()]
+	return validator, ok
+}
+
 func validateBodyParam(p spec.Parameter, data interface{}) (errs ValidationErrors) {
-	return validatebySchema(p.Schema, data)
+	var validator *validate.SchemaValidator
+
+	//validator = validate.NewSchemaValidator(p.Schema, nil, "", formatRegistry)
+
+	if v, ok := get(p); ok {
+		validator = v
+		//fmt.Fprintf(os.Stderr, "DEBUG: %#v\n", "getting cached validator")
+	} else {
+		fmt.Fprintf(os.Stderr, "schema for parameter: %#v\n", p.Name)
+		validator = validate.NewSchemaValidator(p.Schema, nil, "", formatRegistry)
+		set(p, validator)
+		//fmt.Fprintf(os.Stderr, "DEBUG: %#v\n", "setting new validator")
+	}
+
+	//return nil
+	res := validator.Validate(data)
+	if res.HasErrors() {
+		for _, e := range res.Errors {
+			ve := e.(*errors.Validation)
+			errs = append(errs, ValidationErrorf(strings.TrimPrefix(ve.Name, "."), nil, strings.TrimPrefix(ve.Error(), ".")))
+		}
+	}
+	return errs
+
+	//return validatebySchema(p.Schema, data)
 }
 
 func validatebySchema(sch *spec.Schema, data interface{}) (errs ValidationErrors) {
@@ -147,6 +207,10 @@ func validatebySchema(sch *spec.Schema, data interface{}) (errs ValidationErrors
 	}
 
 	return errs
+}
+
+func assembleValidatonErrors() {
+
 }
 
 // valErr implements ValidationError.

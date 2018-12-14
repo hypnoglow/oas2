@@ -1,0 +1,47 @@
+swagger: "2.0"
+info:
+  version: "1.0.0"
+  title: "Recorder server"
+basePath: "/api/recorder"
+paths:
+  /records/batch:
+    post:
+      summary: "Record a set of messages"
+      operationId: "recordMessagesBatch"
+      consumes:
+      - "application/json"
+      parameters:
+      - in: body
+        name: body
+        schema:
+          id: foo
+          type: object
+          properties:
+            data:
+              type: object
+              properties:
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      text:
+                        type: string
+                      time:
+                        type: string
+                        format: 'date-time'
+                      kind:
+                        type: string
+                        enum:
+                          - important
+                          - regular
+                          - spam
+                  minItems: 1
+                  maxItems: 10000
+      responses:
+        200:
+          description: "Messages recorded"
+        400:
+          description: "Invalid input"
+        500:
+          description: "Server error"

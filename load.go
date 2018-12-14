@@ -11,8 +11,6 @@ import (
 	"github.com/go-openapi/analysis"
 	"github.com/go-openapi/loads"
 	"github.com/go-openapi/spec"
-	"github.com/go-openapi/strfmt"
-	"github.com/go-openapi/validate"
 	"github.com/pkg/errors"
 )
 
@@ -106,9 +104,10 @@ func loadDocument(fpath, cacheDir string) (*loads.Document, error) {
 
 	// We assume that everything cached is valid, but when cache is empty -
 	// we need to validate the original document.
-	if err = validate.Spec(document, strfmt.Default); err != nil {
-		return nil, errors.Wrap(err, "validate spec")
-	}
+	// TODO: uncomment me
+	//if err = validate.Spec(document, strfmt.Default); err != nil {
+	//	return nil, errors.Wrap(err, "validate spec")
+	//}
 
 	exp, err := document.Expanded(&spec.ExpandOptions{RelativeBase: fpath})
 	if err != nil {
