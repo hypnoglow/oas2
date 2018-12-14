@@ -11,11 +11,11 @@ type Resolver interface {
 }
 
 // NewResolvingBasis returns a new resolving basis.
-func NewResolvingBasis(doc *Document, resolver Resolver) *ResolvingBasis {
+func NewResolvingBasis(name string, doc *Document) *ResolvingBasis {
 	b := &ResolvingBasis{
-		doc:      doc,
-		resolver: resolver,
-		strict:   true,
+		adapter: mustGetAdapter(name),
+		doc:     doc,
+		strict:  true,
 	}
 
 	b.initCache()
@@ -25,9 +25,12 @@ func NewResolvingBasis(doc *Document, resolver Resolver) *ResolvingBasis {
 // A ResolvingBasis provides fundamental oas middleware, which resolve operation
 // context from the request using the Resolver.
 type ResolvingBasis struct {
-	doc      *Document
-	resolver Resolver
-	cache    map[string]operationInfo
+	adapter Adapter
+	doc     *Document
+
+	// internals
+
+	cache map[string]operationInfo
 
 	// common options for derived middlewares
 
@@ -52,6 +55,16 @@ func (b *ResolvingBasis) initCache() {
 	}
 }
 
+// OperationRouter returns a new OperationRouter based on underlying adapter.
+// This router is already configured to use basis oas document and
+// OperationContext middleware.
+func (b *ResolvingBasis) OperationRouter(meta interface{}) OperationRouter {
+	return b.adapter.
+		OperationRouter(meta).
+		WithDocument(b.doc).
+		WithMiddleware(b.OperationContext())
+}
+
 // OperationContext returns a middleware that adds OpenAPI operation context to
 // the request.
 func (b *ResolvingBasis) OperationContext() Middleware {
@@ -60,7 +73,7 @@ func (b *ResolvingBasis) OperationContext() Middleware {
 			oc: &operationContext{
 				next: next,
 			},
-			resolver: b.resolver,
+			resolver: b.adapter.Resolver(b.doc),
 			cache:    b.cache,
 			strict:   b.strict,
 		}
@@ -101,7 +114,9 @@ func (mw *resolvingOperationContext) ServeHTTP(w http.ResponseWriter, req *http.
 // PathParamsContext returns a middleware that provides path parameters
 // as request context values. With this middleware, handlers can call
 // GetPathParam(req, "foo") to get typed value of path parameter "foo".
-func (b *ResolvingBasis) PathParamsContext(ex PathParamExtractor) Middleware {
+func (b *ResolvingBasis) PathParamsContext() Middleware {
+	ex := b.adapter.PathParamExtractor()
+
 	return func(next http.Handler) http.Handler {
 		return &resolvingPathParamExtractor{
 			next: &pathParamExtractor{

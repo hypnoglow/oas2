@@ -1,21 +1,21 @@
-package oas_chi
+package oas_chi_test
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hypnoglow/oas2"
+	"github.com/hypnoglow/oas2/adapter/chi"
+	_ "github.com/hypnoglow/oas2/adapter/chi/init"
 )
 
 func TestOperationRouter_implementation(t *testing.T) {
-	var _ oas.OperationRouter = &OperationRouter{}
+	var _ oas.OperationRouter = &oas_chi.OperationRouter{}
 }
 
 func TestOperationRouter(t *testing.T) {
@@ -23,17 +23,15 @@ func TestOperationRouter(t *testing.T) {
 	assert.NoError(t, err)
 
 	r := chi.NewRouter()
-	basis := oas.NewResolvingBasis(doc, NewResolver(doc))
+	basis := oas.NewResolvingBasis("chi", doc)
 
 	var notHandledOps []string
 
-	err = NewOperationRouter(r).
-		WithDocument(doc).
+	err = basis.OperationRouter(r).
 		WithOperationHandlers(map[string]http.Handler{
 			"getPetById": getPetHandler{},
 		}).
-		WithMiddleware(basis.OperationContext()).
-		WithMiddleware(basis.PathParamsContext(NewPathParamExtractor())).
+		WithMiddleware(basis.PathParamsContext()).
 		WithMissingOperationHandlerFunc(func(s string) {
 			notHandledOps = append(notHandledOps, s)
 		}).
@@ -54,8 +52,6 @@ type getPetHandler struct{}
 func (h getPetHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	id, ok := oas.GetPathParam(req, "petId").(int64)
 	if !ok {
-		fmt.Fprintf(os.Stderr, "DEBUG: %#v\n", id)
-		os.Exit(1)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
