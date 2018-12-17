@@ -6,10 +6,10 @@ import (
 	"github.com/hypnoglow/oas2"
 )
 
-type adapter struct {
-	// TODO: cache existing objects in here?
-}
+// adapter implements oas.Adapter using gorilla mux router.
+type adapter struct{}
 
+// Resolver returns a resolver based on gorilla mux router context.
 func (a adapter) Resolver(meta interface{}) oas.Resolver {
 	doc, ok := meta.(*oas.Document)
 	if !ok {
@@ -19,6 +19,7 @@ func (a adapter) Resolver(meta interface{}) oas.Resolver {
 	return NewResolver(doc)
 }
 
+// OperationRouter returns an operation router based on gorilla mux router.
 func (a adapter) OperationRouter(meta interface{}) oas.OperationRouter {
 	r, ok := meta.(*mux.Router)
 	if !ok {
@@ -28,11 +29,13 @@ func (a adapter) OperationRouter(meta interface{}) oas.OperationRouter {
 	return NewOperationRouter(r)
 }
 
+// PathParamExtractor returns a new path param extractor based on gorilla mux
+// router context.
 func (a adapter) PathParamExtractor() oas.PathParamExtractor {
 	return NewPathParamExtractor()
 }
 
-// NewAdapter ... TODO
+// NewAdapter returns a new adapter based on gorilla mux router.
 func NewAdapter() oas.Adapter {
 	return adapter{}
 }

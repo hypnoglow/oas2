@@ -55,8 +55,8 @@ func (b *ResolvingBasis) initCache() {
 	}
 }
 
-// OperationRouter returns a new OperationRouter based on underlying adapter.
-// This router is already configured to use basis oas document and
+// OperationRouter returns a new OperationRouter based on the underlying
+// adapter. This router is already configured to use basis oas document and
 // OperationContext middleware.
 func (b *ResolvingBasis) OperationRouter(meta interface{}) OperationRouter {
 	return b.adapter.
