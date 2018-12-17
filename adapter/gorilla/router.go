@@ -61,9 +61,9 @@ func (r *OperationRouter) WithMissingOperationHandlerFunc(fn func(string)) oas.O
 	return r
 }
 
-// Route builds routing based on the previously provided specification,
+// Build builds routing based on the previously provided specification,
 // operation handlers, and other options.
-func (r *OperationRouter) Route() error {
+func (r *OperationRouter) Build() error {
 	if r.doc == nil {
 		return fmt.Errorf("no doc is given")
 	}

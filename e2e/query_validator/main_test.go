@@ -34,7 +34,7 @@ func TestQueryValidatorMiddleware(t *testing.T) {
 				oas.WithProblemHandler(oas.ProblemHandlerFunc(handleValidationError)),
 			),
 		).
-		Route()
+		Build()
 	assert.NoError(t, err)
 
 	srv := httptest.NewServer(r)

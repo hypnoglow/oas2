@@ -29,7 +29,7 @@ type OperationRouter interface {
 	// This method returns the router for convenient chaining.
 	WithMissingOperationHandlerFunc(fn func(string)) OperationRouter
 
-	// Route builds routing based on the previously provided specification,
+	// Build builds routing based on the previously provided specification,
 	// operation handlers, and other options.
-	Route() error
+	Build() error
 }

@@ -55,7 +55,7 @@ func api(doc *oas.Document) http.Handler {
 			basis.ResponseBodyValidator(respProblemHandler),
 		).
 		WithMissingOperationHandlerFunc(missingOperationHandler).
-		Route()
+		Build()
 	if err != nil {
 		panic(err)
 	}

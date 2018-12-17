@@ -39,7 +39,7 @@ func TestMiddlewareExecutionOrder(t *testing.T) {
 				// in the request created by RequestID middleware.
 				RequestID,
 				RequestIDLogger(log.New(buffer, "", 0)),
-			).Route()
+			).Build()
 		assert.NoError(t, err)
 
 		testRouterMiddleware(t, r, buffer)
@@ -57,7 +57,7 @@ func TestMiddlewareExecutionOrder(t *testing.T) {
 			// in the request created by RequestID middleware.
 			WithMiddleware(RequestID).
 			WithMiddleware(RequestIDLogger(log.New(buffer, "", 0))).
-			Route()
+			Build()
 		assert.NoError(t, err)
 
 		testRouterMiddleware(t, r, buffer)

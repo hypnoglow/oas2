@@ -33,7 +33,7 @@ func TestOperationRouter(t *testing.T) {
 		WithMissingOperationHandlerFunc(func(s string) {
 			notHandledOps = append(notHandledOps, s)
 		}).
-		Route()
+		Build()
 	assert.NoError(t, err)
 
 	w := httptest.NewRecorder()
