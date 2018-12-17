@@ -9,7 +9,7 @@ import (
 
 	"github.com/hypnoglow/oas2"
 	"github.com/hypnoglow/oas2/_examples/app"
-	"github.com/hypnoglow/oas2/adapter/gorilla"
+	_ "github.com/hypnoglow/oas2/adapter/gorilla/init"
 )
 
 func main() {
@@ -28,7 +28,7 @@ func main() {
 
 func api(doc *oas.Document) http.Handler {
 	// Create basis that provides middlewares.
-	basis := oas.NewResolvingBasis(doc, oas_gorilla.NewResolver(doc))
+	basis := oas.NewResolvingBasis("gorilla", doc)
 
 	srv := app.NewServer()
 
@@ -40,16 +40,12 @@ func api(doc *oas.Document) http.Handler {
 	router := mux.NewRouter()
 
 	// Build routing for the API using operation router.
-	err := oas_gorilla.NewOperationRouter(router).
-		WithDocument(doc).
+	err := basis.OperationRouter(router).
 		WithOperationHandlers(map[string]http.Handler{
 			"getSum":  http.HandlerFunc(srv.GetSum),
 			"postSum": http.HandlerFunc(srv.PostSum),
 		}).
 		WithMiddleware(
-			// First of all, use operation context middleware so other oas middlewares
-			// can function properly.
-			basis.OperationContext(),
 			// Add content-type validators.
 			basis.RequestContentTypeValidator(reqProblemHandler),
 			basis.ResponseContentTypeValidator(respProblemHandler),
@@ -59,7 +55,7 @@ func api(doc *oas.Document) http.Handler {
 			basis.ResponseBodyValidator(respProblemHandler),
 		).
 		WithMissingOperationHandlerFunc(missingOperationHandler).
-		Route()
+		Build()
 	if err != nil {
 		panic(err)
 	}

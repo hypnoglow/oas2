@@ -1,4 +1,4 @@
-package oas_gorilla
+package oas_gorilla_test
 
 import (
 	"net/http"
@@ -9,10 +9,12 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hypnoglow/oas2"
+	"github.com/hypnoglow/oas2/adapter/gorilla"
+	_ "github.com/hypnoglow/oas2/adapter/gorilla/init"
 )
 
 func TestOperationRouter_implementation(t *testing.T) {
-	var _ oas.OperationRouter = &OperationRouter{}
+	var _ oas.OperationRouter = &oas_gorilla.OperationRouter{}
 }
 
 func TestOperationRouter(t *testing.T) {
@@ -20,20 +22,18 @@ func TestOperationRouter(t *testing.T) {
 	assert.NoError(t, err)
 
 	r := mux.NewRouter()
-	basis := oas.NewResolvingBasis(doc, NewResolver(doc))
+	basis := oas.NewResolvingBasis("gorilla", doc)
 
 	var notHandledOps []string
 
-	err = NewOperationRouter(r).
-		WithDocument(doc).
+	err = basis.OperationRouter(r).
 		WithOperationHandlers(map[string]http.Handler{
 			"addPet": addPetHandler2{},
 		}).
-		WithMiddleware(basis.OperationContext()).
 		WithMissingOperationHandlerFunc(func(s string) {
 			notHandledOps = append(notHandledOps, s)
 		}).
-		Route()
+		Build()
 	assert.NoError(t, err)
 
 	w := httptest.NewRecorder()

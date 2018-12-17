@@ -16,7 +16,9 @@ func TestDecodeQueryParams(t *testing.T) {
 	doc, err := oas.LoadFile(getSpecPath(t))
 	assert.NoError(t, err)
 
-	basis := oas.NewResolvingBasis(doc, fakeResolver{})
+	oas.RegisterAdapter("fake", fakeAdapter{})
+
+	basis := oas.NewResolvingBasis("fake", doc)
 	h := basis.OperationContext()(getPetsHandler{})
 
 	w := httptest.NewRecorder()
@@ -34,6 +36,20 @@ func TestDecodeQueryParams(t *testing.T) {
 	}
 
 	assert.EqualValues(t, 10, result.Limit)
+}
+
+type fakeAdapter struct{}
+
+func (fakeAdapter) Resolver(meta interface{}) oas.Resolver {
+	return fakeResolver{}
+}
+
+func (fakeAdapter) OperationRouter(meta interface{}) oas.OperationRouter {
+	panic("implement me")
+}
+
+func (fakeAdapter) PathParamExtractor() oas.PathParamExtractor {
+	panic("implement me")
 }
 
 type fakeResolver struct{}

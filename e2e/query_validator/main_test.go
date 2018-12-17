@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hypnoglow/oas2"
-	"github.com/hypnoglow/oas2/adapter/gorilla"
+	_ "github.com/hypnoglow/oas2/adapter/gorilla/init"
 	"github.com/hypnoglow/oas2/e2e/testdata"
 )
 
@@ -22,21 +22,19 @@ import (
 // middleware will validate query.
 func TestQueryValidatorMiddleware(t *testing.T) {
 	doc := testdata.GreeterSpec(t)
-	basis := oas.NewResolvingBasis(doc, oas_gorilla.NewResolver(doc))
+	basis := oas.NewResolvingBasis("gorilla", doc)
 
 	r := mux.NewRouter()
-	err := oas_gorilla.NewOperationRouter(r).
-		WithDocument(doc).
+	err := basis.OperationRouter(r).
 		WithOperationHandlers(map[string]http.Handler{
 			"greet": testdata.GreetHandler{},
 		}).
 		WithMiddleware(
-			basis.OperationContext(),
 			basis.QueryValidator(
 				oas.WithProblemHandler(oas.ProblemHandlerFunc(handleValidationError)),
 			),
 		).
-		Route()
+		Build()
 	assert.NoError(t, err)
 
 	srv := httptest.NewServer(r)

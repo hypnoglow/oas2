@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hypnoglow/oas2"
-	"github.com/hypnoglow/oas2/adapter/gorilla"
+	_ "github.com/hypnoglow/oas2/adapter/gorilla/init"
 	"github.com/hypnoglow/oas2/e2e/testdata"
 )
 
@@ -24,24 +24,22 @@ import (
 // is executed in correct order.
 func TestMiddlewareExecutionOrder(t *testing.T) {
 	doc := testdata.GreeterSpec(t)
-	basis := oas.NewResolvingBasis(doc, oas_gorilla.NewResolver(doc))
+	basis := oas.NewResolvingBasis("gorilla", doc)
 
 	t.Run("middleware passed inline with RouterMiddleware()", func(t *testing.T) {
 		buffer := &bytes.Buffer{}
 
 		r := mux.NewRouter()
-		err := oas_gorilla.NewOperationRouter(r).
-			WithDocument(doc).
+		err := basis.OperationRouter(r).
 			WithOperationHandlers(map[string]http.Handler{
 				"greet": testdata.GreetHandler{},
 			}).
 			WithMiddleware(
-				basis.OperationContext(),
 				// We are testing that RequestIDLogger will have access to the request id
 				// in the request created by RequestID middleware.
 				RequestID,
 				RequestIDLogger(log.New(buffer, "", 0)),
-			).Route()
+			).Build()
 		assert.NoError(t, err)
 
 		testRouterMiddleware(t, r, buffer)
@@ -51,17 +49,15 @@ func TestMiddlewareExecutionOrder(t *testing.T) {
 		buffer := &bytes.Buffer{}
 
 		r := mux.NewRouter()
-		err := oas_gorilla.NewOperationRouter(r).
-			WithDocument(doc).
+		err := basis.OperationRouter(r).
 			WithOperationHandlers(map[string]http.Handler{
 				"greet": testdata.GreetHandler{},
 			}).
-			WithMiddleware(basis.OperationContext()).
 			// We are testing that RequestIDLogger will have access to the request id
 			// in the request created by RequestID middleware.
 			WithMiddleware(RequestID).
 			WithMiddleware(RequestIDLogger(log.New(buffer, "", 0))).
-			Route()
+			Build()
 		assert.NoError(t, err)
 
 		testRouterMiddleware(t, r, buffer)

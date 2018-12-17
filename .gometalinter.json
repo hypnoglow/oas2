@@ -4,7 +4,8 @@
   ],
   "exclude": [
     "error return value not checked.*defer\\s.*\\.Close()",
-    "don't use an underscore in package name"
+    "don't use an underscore in package name",
+    "http.CloseNotifier is deprecated"
   ],
   "concurrency": 2,
   "deadline": "60s",
