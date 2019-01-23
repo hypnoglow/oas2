@@ -1,6 +1,6 @@
-/_tmp/
-/vendor/
+bin/
+tmp/
+vendor/
 
 coverage.txt
 profile.out
-

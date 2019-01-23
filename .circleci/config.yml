@@ -63,6 +63,23 @@ jobs:
       - attach_workspace:
           at: /go/src/github.com/hypnoglow
       - run: go test -tags e2e ./e2e/...
+  release:
+    docker:
+      - image: circleci/golang:1.9
+    working_directory: /go/src/github.com/hypnoglow/oas2
+    steps:
+      - attach_workspace:
+          at: /go/src/github.com/hypnoglow
+      - run:
+          name: Build the plugin
+          command: CGO_ENABLED=0 go build -installsuffix 'static' -o bin/oas-expand ./cmd/oas-expand
+      - deploy:
+          name: goreleaser
+          command: |
+            if [ -n "$CIRCLE_TAG" ]; then
+              curl -sL https://git.io/goreleaser | bash
+            fi
+
 workflows:
   version: 2
   prepare-and-test:
@@ -83,3 +100,20 @@ workflows:
       - "e2e":
           requires:
             - prepare-code
+  # release-pipeline runs only on tags.
+  release-pipeline:
+    jobs:
+      - prepare-code:
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore: /.*/
+      - release:
+          requires:
+            - prepare-code
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore: /.*/
