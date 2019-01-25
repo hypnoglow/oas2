@@ -111,5 +111,5 @@ type fakeHandler struct {
 func (h *fakeHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	h.called = true
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"foo":"bar"}`))
+	w.Write([]byte(`{"foo":"bar"}`))  // nolint: errcheck
 }

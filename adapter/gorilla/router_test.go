@@ -48,5 +48,5 @@ func TestOperationRouter(t *testing.T) {
 type addPetHandler2 struct{}
 
 func (h addPetHandler2) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	w.Write([]byte(`{"foo":"bar"}`))
+	w.Write([]byte(`{"foo":"bar"}`))  // nolint: errcheck
 }
