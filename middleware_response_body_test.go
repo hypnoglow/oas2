@@ -81,20 +81,20 @@ func handleGetPetByIDFaked(w http.ResponseWriter, req *http.Request) {
 	// fake not found
 	if req.URL.Path == "/v2/pet/404" {
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(`{"error":"not found"}`))
+		w.Write([]byte(`{"error":"not found"}`))  // nolint: errcheck
 		return
 	}
 
 	// fake for server error {
 	if req.URL.Path == "/v2/pet/500" {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"error":"foo"}`))
+		w.Write([]byte(`{"error":"foo"}`))  // nolint: errcheck
 		return
 	}
 
 	// fake for bad json
 	if req.URL.Path == "/v2/pet/badjson" {
-		w.Write([]byte(`{"name":`))
+		w.Write([]byte(`{"name":`))  // nolint: errcheck
 		return
 	}
 

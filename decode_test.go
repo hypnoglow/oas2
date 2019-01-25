@@ -45,7 +45,7 @@ func TestDecodeQueryParams(t *testing.T) {
 			Name           string `oas:"name"`
 			Sex            string `oas:"sex"`
 			FieldWithNoTag string
-			notSettable    string  `oas:"not_settable"`
+			notSettable    string  `oas:"not_settable"`  // nolint: structcheck
 			NotMandatory   *string `oas:"not_mandatory"`
 		}
 
