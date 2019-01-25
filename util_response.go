@@ -15,23 +15,23 @@ import (
 // newWrapResponseWriter wraps an http.ResponseWriter, returning a proxy that allows you to
 // hook into various parts of the response process.
 func newWrapResponseWriter(w http.ResponseWriter, protoMajor int) wrapResponseWriter {
-	_, cn := w.(http.CloseNotifier)
 	_, fl := w.(http.Flusher)
 
 	bw := basicWriter{ResponseWriter: w}
 
 	if protoMajor == 2 {
 		_, ps := w.(http.Pusher)
-		if cn && fl && ps {
+		if fl && ps {
 			return &http2FancyWriter{bw}
 		}
 	} else {
 		_, hj := w.(http.Hijacker)
 		_, rf := w.(io.ReaderFrom)
-		if cn && fl && hj && rf {
+		if fl && hj && rf {
 			return &httpFancyWriter{bw}
 		}
 	}
+
 	if fl {
 		return &flushWriter{bw}
 	}
@@ -134,20 +134,18 @@ type httpFancyWriter struct {
 	basicWriter
 }
 
-func (f *httpFancyWriter) CloseNotify() <-chan bool {
-	cn := f.basicWriter.ResponseWriter.(http.CloseNotifier)
-	return cn.CloseNotify()
-}
 func (f *httpFancyWriter) Flush() {
 	f.wroteHeader = true
 
 	fl := f.basicWriter.ResponseWriter.(http.Flusher)
 	fl.Flush()
 }
+
 func (f *httpFancyWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	hj := f.basicWriter.ResponseWriter.(http.Hijacker)
 	return hj.Hijack()
 }
+
 func (f *httpFancyWriter) ReadFrom(r io.Reader) (int64, error) {
 	if f.basicWriter.tee != nil {
 		n, err := io.Copy(&f.basicWriter, r)
@@ -161,9 +159,9 @@ func (f *httpFancyWriter) ReadFrom(r io.Reader) (int64, error) {
 	return n, err
 }
 
-var _ http.CloseNotifier = &httpFancyWriter{}
 var _ http.Flusher = &httpFancyWriter{}
 var _ http.Hijacker = &httpFancyWriter{}
+var _ http.Pusher = &http2FancyWriter{}
 var _ io.ReaderFrom = &httpFancyWriter{}
 
 // http2FancyWriter is a HTTP2 writer that additionally satisfies http.CloseNotifier,
@@ -174,10 +172,6 @@ type http2FancyWriter struct {
 	basicWriter
 }
 
-func (f *http2FancyWriter) CloseNotify() <-chan bool {
-	cn := f.basicWriter.ResponseWriter.(http.CloseNotifier)
-	return cn.CloseNotify()
-}
 func (f *http2FancyWriter) Flush() {
 	f.wroteHeader = true
 
@@ -185,5 +179,4 @@ func (f *http2FancyWriter) Flush() {
 	fl.Flush()
 }
 
-var _ http.CloseNotifier = &http2FancyWriter{}
 var _ http.Flusher = &http2FancyWriter{}
