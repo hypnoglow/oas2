@@ -1,5 +1,7 @@
 /_tmp/
 /vendor/
+bin/
+tmp/
 
 coverage.txt
 profile.out
