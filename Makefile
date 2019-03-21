@@ -16,4 +16,4 @@ e2e:
 
 .PHONY: lint
 lint: install
-	@gometalinter ./...
+	@golangci-lint run .
