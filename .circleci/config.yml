@@ -4,82 +4,40 @@
 version: 2
 
 jobs:
-  "prepare-code":
+  "test":
     docker:
-      - image: circleci/golang:1.9
-    working_directory: /go/src/github.com/hypnoglow/oas2
+      - image: circleci/golang:1.12
+        environment:
+          GO111MODULE: "on"
     steps:
       - checkout
-      - run: curl -sSL https://github.com/golang/dep/releases/download/v0.5.0/dep-linux-amd64 -o /go/bin/dep
-      - run: chmod +x /go/bin/dep
-      - run: /go/bin/dep ensure -v
-      - persist_to_workspace:
-          root: /go/src/github.com/hypnoglow
-          paths:
-            - oas2
-  "test:1.9":
-    docker:
-      - image: circleci/golang:1.9
-    working_directory: /go/src/github.com/hypnoglow/oas2
-    steps:
-      - attach_workspace:
-          at: /go/src/github.com/hypnoglow
-      - run: go build ./...
-      - run: go test -v ./...
-  "test:1.10":
-    docker:
-      - image: circleci/golang:1.10
-    working_directory: /go/src/github.com/hypnoglow/oas2
-    steps:
-      - attach_workspace:
-          at: /go/src/github.com/hypnoglow
-      - run: go build ./...
       - run: go test -v ./...
   "lint":
     docker:
-      - image: circleci/golang:1.9
-    working_directory: /go/src/github.com/hypnoglow/oas2
+      - image: golangci/golangci-lint:v1.15
     steps:
-      - attach_workspace:
-          at: /go/src/github.com/hypnoglow
-#      - run: apk add --no-cache git gcc musl-dev # required for metalinter, see github.com/alecthomas/gometalinter/issues/149
-      - run: go get -v -u github.com/alecthomas/gometalinter
-      - run: gometalinter --install --update
-      - run: gometalinter ./...
+      - checkout
+      - run: go mod download
+      - run: golangci-lint run
   "codecov":
     docker:
-      - image: circleci/golang:1.9
-    working_directory: /go/src/github.com/hypnoglow/oas2
+      - image: circleci/golang:1.12
     steps:
-      - attach_workspace:
-          at: /go/src/github.com/hypnoglow
+      - checkout
       - run: ./.circleci/testcover.sh
       - run: bash <(curl -s https://codecov.io/bash)
   "e2e":
     docker:
-      - image: circleci/golang:1.9
-    working_directory: /go/src/github.com/hypnoglow/oas2
+      - image: circleci/golang:1.12
     steps:
-      - attach_workspace:
-          at: /go/src/github.com/hypnoglow
+      - checkout
       - run: go test -tags e2e ./e2e/...
+
 workflows:
   version: 2
-  prepare-and-test:
+  test-and-lint:
     jobs:
-      - prepare-code
-      - "test:1.9":
-          requires:
-            - prepare-code
-      - "test:1.10":
-          requires:
-            - prepare-code
-      - "lint":
-          requires:
-            - prepare-code
-      - "codecov":
-          requires:
-            - prepare-code
-      - "e2e":
-          requires:
-            - prepare-code
+      - "test"
+      - "lint"
+      - "codecov"
+      - "e2e"
